@@ -1,0 +1,81 @@
+name: Deploy a Helm chart to a GKE cluster
+
+on:
+  workflow_call:
+    inputs:
+      github_repository:
+        description: The Github repository containing the Helm chart and values.
+        required: true
+        type: string
+      git_ref:
+        description: The Git ref to check out.
+        default: master
+        type: string
+      wip_project_number:
+        description: The project number of the GCP project hosting the workload identity provider.
+        required: true
+        type: number
+      service_account:
+        description: The Cloud IAM service account used for worload identity federation.
+        required: true
+        type: string
+      gke_cluster_name:
+        description: Name of the GKE cluster.
+        required: true
+        type: string
+      gke_cluster_location:
+        description: Region or zone the GKE cluster is running in.
+        required: true
+        type: string
+      gke_project_id:
+        description: The project id of the GCP project hosting the GKE cluster.
+        required: true
+        type: string
+      helm_version:
+        default: 3.9.0
+        description: Version of Helm to use
+        type: string
+      helm_namespace:
+        description: The Kubernetes namespace to install the Helm chart into.
+        required: true
+        type: string
+      helm_values:
+        description: The local path to the values file.
+        required: true
+        type: string
+      helm_release:
+        description: The name of the Helm release.
+        required: true
+        type: string
+      helm_chart:
+        description: The local path or URL of the Helm chart.
+        required: true
+        type: string
+    secrets:
+      github_deploy_key:
+        description: The SSH private key used by Git to checkout repositories.
+        default: ""
+        type: string
+
+jobs:
+  deploy_chart:
+    name: Deploy the Helm chart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{ inputs.github_repository }}
+          ref: ${{ inputs.git_ref }}
+          ssh-key: ${{ secrets.github_deploy_key }}
+      - uses: ./actions/deploy-chart
+        with:
+          wip_project_number: ${{ inputs.wip_project_number }}
+          service_account: ${{ inputs.service_account }}
+          gke_cluster_name: ${{ inputs.gke_cluster_name }}
+          gke_cluster_location: ${{ inputs.gke_cluster_location }}
+          gke_project_id: ${{ inputs.gke_project_id }}
+          helm_version: ${{ inputs.helm_version }}
+          helm_namespace: ${{ inputs.helm_namespace }}
+          helm_values: ${{ inputs.helm_values }}
+          helm_release: ${{ inputs.helm_release }}
+          helm_chart: ${{ inputs.helm_chart }}

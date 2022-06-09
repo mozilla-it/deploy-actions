@@ -1,0 +1,78 @@
+name: deploy-chart
+description: Deploy a Helm chart to a GKE cluster.
+
+inputs:
+  wip_project_number:
+    description: The project number of the GCP project hosting the workload identity provider.
+    required: true
+    type: number
+  service_account:
+    description: The Cloud IAM service account used for worload identity federation.
+    required: true
+    type: string
+  gke_cluster_name:
+    description: Name of the GKE cluster.
+    required: true
+    type: string
+  gke_cluster_location:
+    description: Region or zone the GKE cluster is running in.
+    required: true
+    type: string
+  gke_project_id:
+    description: The project id of the GCP project hosting the GKE cluster.
+    required: true
+    type: string
+  helm_version:
+    default: 3.9.0
+    description: Version of Helm to use
+    type: string
+  helm_namespace:
+    description: The Kubernetes namespace to install the Helm chart into.
+    required: true
+    type: string
+  helm_values:
+    description: The local path to the values file.
+    required: true
+    type: string
+  helm_release:
+    description: The name of the Helm release.
+    required: true
+    type: string
+  helm_chart:
+    description: The local path or URL of the Helm chart.
+    required: true
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+
+  - id: auth
+    uses: google-github-actions/auth@v0
+    with:
+      workload_identity_provider: projects/${{ inputs.wip_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
+      service_account: ${{ inputs.service_account }}
+
+  - id: get-gke-credentials
+    uses: google-github-actions/get-gke-credentials@v0
+    with:
+      project_id: ${{ inputs.gke_project_id }}
+      cluster_name: ${{ inputs.gke_cluster_location }}
+      location: ${{ inputs.gke_cluster_location }}
+
+  // FIXME we should probably use a docker image w/ Helm installed already
+  - name: Install Helm
+    run: |
+      set -euo pipefail
+      curl -sSL --tls-v1.3 https://get.helm.sh/helm-v${{ inputs.helm_version }}-linux-amd64.tar.gz |
+         tar x
+      install -D linux-amd64/helm ~/.local/bin
+    working-directory: /tmp
+
+  // FIXME this only supports a single helm value file, should be able to support arrays w/ bash IFS
+  - name: Deploy the Helm chart
+    run: |
+      helm upgrade --install --atomic \
+          --namespace ${{ inputs.helm_namespace }} \
+          --values ${{ inputs.helm_values }} \
+          ${{ inputs.helm_release }} ${{ inputs.helm_chart }}
