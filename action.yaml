@@ -1,0 +1,89 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+name: Deploy Helm Chart
+author: Mozilla
+description: Obtain credentials for GKE cluster & install Helm chart
+
+inputs:
+  infra_repo:
+    description: Infrastructure repository contain Helm charts, e.g. mozilla/helm-charts
+    required: true
+  infra_repo_ref:
+    description: Infrastructure repository git reference to checkout, defaults to `main`
+    required: false
+    default: main
+  infra_repo_ssh_key:
+    description: SSH key with permissions to checkout infrastructure repository, typically a deploy key
+    required: true
+  app_name:
+    description: Name of tenant app to deploy to, e.g. testapp1
+    required: true
+  env_name:
+    description: Name of tenant env to deploy to, e.g. dev
+    required: true
+  realm_name:
+    description: Name of tenant realm to deploy to, e.g. nonprod
+    required: true
+  workload_identity_pool_project_number:
+    description: Project number of workload identity pool used for OIDC authentication
+    required: true
+  k8s_cluster_name:
+    description: Kubernetes cluster name, e.g. mozilla-nonprod
+    required: true
+  k8s_cluster_location:
+    description: Kubernetes cluster location, e.g. us-west1
+    required: true
+  k8s_cluster_project:
+    description: Kubernetes cluster project, e.g. mozilla-firefox-nonprod
+    required: true
+  helm_release_name:
+    description: Helm chart release name, defaults to `gha`
+    required: false
+    default: gha
+  helm_chart_path:
+    description: Helm chart path within infrastructure repository , e.g. testapp1/k8s/testapp1/
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - id: checkout-deploy-repo
+      uses: actions/checkout@v3
+      with:
+        path: deploy
+
+    - id: checkout-infra-repo
+      uses: actions/checkout@v3
+      with:
+        path: infra
+        repository: ${{ inputs.infra_repo }}
+        ref: ${{ inputs.infra_repo_ref }}
+        ssh-key: ${{ inputs.infra_repo_ssh_key }}
+
+    - id: gcp-auth
+      uses: google-github-actions/auth@v0
+      with:
+        service_account: deploy-${{ inputs.env_name }}@moz-fx-${{ inputs.app_name }}-${{ inputs.realm_name }}.iam.gserviceaccount.com
+        workload_identity_provider: projects/${{ inputs.workload_identity_pool_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
+
+    - id: kubenetes-credentials
+      uses: google-github-actions/get-gke-credentials@v0
+      with:
+        cluster_name: ${{ inputs.k8s_cluster_name }}
+        location: ${{ inputs.k8s_cluster_location }}
+        project_id: ${{ inputs.k8s_cluster_project }}
+
+    - name: helm version
+      run: helm version
+
+    - name: helm list
+      run: helm list -n ${{ inputs.app_name }}-${{ inputs.env_name }} -a
+
+    # FIXME
+    # - Look at adding --atomic or --wait as flags
+    # - Look at adding flags for values files
+    # - Consider using https://github.com/deliverybot/helm or https://github.com/vimeda/helm
+    - name: helm install
+      run: helm upgrade --install -n ${{ inputs.app_name }}-${{ inputs.env_name }} ${{ inputs.helm_release_name }} ./infra/${{ inputs.helm_chart_path }}
