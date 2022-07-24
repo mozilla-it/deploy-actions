@@ -76,9 +76,11 @@ runs:
         project_id: ${{ inputs.k8s_cluster_project }}
 
     - name: helm version
+      shell: bash
       run: helm version
 
     - name: helm list
+      shell: bash
       run: helm list -n ${{ inputs.app_name }}-${{ inputs.env_name }} -a
 
     # FIXME
@@ -86,4 +88,5 @@ runs:
     # - Look at adding flags for values files
     # - Consider using https://github.com/deliverybot/helm or https://github.com/vimeda/helm
     - name: helm install
+      shell: bash
       run: helm upgrade --install -n ${{ inputs.app_name }}-${{ inputs.env_name }} ${{ inputs.helm_release_name }} ./infra/${{ inputs.helm_chart_path }}
