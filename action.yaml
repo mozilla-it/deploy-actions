@@ -45,6 +45,10 @@ inputs:
   helm_chart_path:
     description: Helm chart path within infrastructure repository , e.g. testapp1/k8s/testapp1/
     required: true
+  helm_value_files:
+    description: Helm chart value files within the infrastructure repository specified with "-f" flag value, e.g. "-f values-dev.yaml -f values-dev-additional.yaml", defaults to "-f values-$env_name.yaml"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -75,6 +79,16 @@ runs:
         location: ${{ inputs.k8s_cluster_location }}
         project_id: ${{ inputs.k8s_cluster_project }}
 
+    - id: helm-values
+      name: helm value files
+      shell: bash
+      run: |
+        if [[ "${{ inputs.helm_value_files }}" == "" ]]; then
+        echo "::set-output name=FILES::-f values-${{ inputs.env_name }}.yaml"
+        else
+        echo "::set-output name=FILES::${{ inputs.helm_value_files }}"
+        fi
+
     - name: helm version
       shell: bash
       run: helm version
@@ -89,4 +103,5 @@ runs:
     # - Consider using https://github.com/deliverybot/helm or https://github.com/vimeda/helm
     - name: helm install
       shell: bash
-      run: helm upgrade --install -n ${{ inputs.app_name }}-${{ inputs.env_name }} ${{ inputs.helm_release_name }} ./infra/${{ inputs.helm_chart_path }}
+      working-directory: infra/${{ inputs.helm_chart_path }}
+      run: helm upgrade --install -n ${{ inputs.app_name }}-${{ inputs.env_name }} ${{ inputs.helm_release_name }} ${{ steps.helm-values.outputs.FILES }} .
