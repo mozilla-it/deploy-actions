@@ -49,6 +49,10 @@ inputs:
     description: Helm chart value files within the infrastructure repository specified with "-f" flag value, e.g. "-f values-dev.yaml -f values-dev-additional.yaml", defaults to "-f values-$env_name.yaml"
     required: false
     default: ""
+  project_id:
+    description: GCP project_id used to construct deployment service account. Use this when your project_id doesn't follow the normal patterns, i.e.  uses a random id in project_id.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -66,10 +70,20 @@ runs:
         ref: ${{ inputs.infra_repo_ref }}
         ssh-key: ${{ inputs.infra_repo_ssh_key }}
 
+    - id: deployment-service-account
+      name: deployment service account
+      shell: bash
+      run: |
+        if [[ "${{ inputs.project_id }}" == "" ]]; then
+        echo "::set-output name=SERVICE_ACCOUNT::deploy-${{ inputs.env_name }}@moz-fx-${{ inputs.app_name }}-${{ inputs.realm_name }}.iam.gserviceaccount.com"
+        else
+        echo "::set-output name=SERVICE_ACCOUNT::deploy-${{ inputs.env_name }}@${{ inputs.project_id }}.iam.gserviceaccount.com"
+        fi
+
     - id: gcp-auth
       uses: google-github-actions/auth@v0
       with:
-        service_account: deploy-${{ inputs.env_name }}@moz-fx-${{ inputs.app_name }}-${{ inputs.realm_name }}.iam.gserviceaccount.com
+        service_account: ${{ steps.deployment-service-account.outputs.SERVICE_ACCOUNT }}
         workload_identity_provider: projects/${{ inputs.workload_identity_pool_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
 
     - id: kubenetes-credentials
