@@ -7,6 +7,12 @@ author: Mozilla
 description: Obtain credentials for GKE cluster & install Helm chart
 
 inputs:
+  app_name:
+    description: Name of tenant app to deploy to, e.g. testapp1
+    required: true
+  image_tag:
+    description: Name of the image tag
+    required: true
   infra_repo:
     description: Infrastructure repository contain Helm charts, e.g. mozilla/helm-charts
     required: true
@@ -16,9 +22,6 @@ inputs:
     default: main
   infra_repo_ssh_key:
     description: SSH key with permissions to checkout infrastructure repository, typically a deploy key
-    required: true
-  app_name:
-    description: Name of tenant app to deploy to, e.g. testapp1
     required: true
   env_name:
     description: Name of tenant env to deploy to, e.g. dev
