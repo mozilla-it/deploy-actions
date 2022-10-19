@@ -48,6 +48,10 @@ inputs:
   helm_chart_path:
     description: Helm chart path within infrastructure repository , e.g. testapp1/k8s/testapp1/
     required: true
+  helm_values:
+    description: Helm values specified with '--set' flag value, e.g. "--set 'foo.bar=value'"
+    required: false
+    default: ""
   helm_value_files:
     description: Helm chart value files within the infrastructure repository specified with "-f" flag value, e.g. "-f values-dev.yaml -f values-dev-additional.yaml", defaults to "-f values-$env_name.yaml"
     required: false
@@ -118,5 +122,6 @@ runs:
         helm upgrade ${{ inputs.helm_release_name }} .            \
         --install                                                 \
         --namespace ${{ inputs.app_name }}-${{ inputs.env_name }} \
+        ${{ steps.helm_values.outputs.FILES }}                    \
         --set image.tag=${{ inputs.image_tag }}                   \
-        ${{ steps.helm_values.outputs.FILES }}
+        ${{ inputs.helm_values }}
