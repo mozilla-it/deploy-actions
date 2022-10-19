@@ -60,20 +60,15 @@ inputs:
 runs:
   using: composite
   steps:
-    - id: checkout-deploy-repo
+    - name: checkout the infra repo ${{ inputs.infra_repo }}
       uses: actions/checkout@v3
       with:
-        path: deploy
-
-    - id: checkout-infra-repo
-      uses: actions/checkout@v3
-      with:
-        path: infra
+        path: infra_repo
         repository: ${{ inputs.infra_repo }}
         ref: ${{ inputs.infra_repo_ref }}
         ssh-key: ${{ inputs.infra_repo_ssh_key }}
 
-    - id: deployment-service-account
+    - id: deployment_service_account
       name: deployment service account
       shell: bash
       run: |
@@ -83,21 +78,21 @@ runs:
         echo "SERVICE_ACCOUNT=deploy-${{ inputs.env_name }}@${{ inputs.project_id }}.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
         fi
 
-    - id: gcp-auth
+    - name: gcp authentication
       uses: google-github-actions/auth@v0
       with:
-        service_account: ${{ steps.deployment-service-account.outputs.SERVICE_ACCOUNT }}
+        service_account: ${{ steps.deployment_service_account.outputs.SERVICE_ACCOUNT }}
         workload_identity_provider: projects/${{ inputs.workload_identity_pool_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
 
-    - id: kubenetes-credentials
+    - name: get gke credentials
       uses: google-github-actions/get-gke-credentials@v0
       with:
         cluster_name: ${{ inputs.k8s_cluster_name }}
         location: ${{ inputs.k8s_cluster_location }}
         project_id: ${{ inputs.k8s_cluster_project }}
 
-    - id: helm-values
-      name: helm value files
+    - name: set the helm values flag
+      id: helm_values
       shell: bash
       run: |
         if [[ "${{ inputs.helm_value_files }}" == "" ]]; then
@@ -116,9 +111,12 @@ runs:
 
     # FIXME
     # - Look at adding --atomic or --wait as flags
-    # - Look at adding flags for values files
-    # - Consider using https://github.com/deliverybot/helm or https://github.com/vimeda/helm
     - name: helm install
       shell: bash
-      working-directory: infra/${{ inputs.helm_chart_path }}
-      run: helm upgrade --install -n ${{ inputs.app_name }}-${{ inputs.env_name }} ${{ inputs.helm_release_name }} ${{ steps.helm-values.outputs.FILES }} .
+      working-directory: infra_repo/${{ inputs.helm_chart_path }}
+      run: |
+        helm upgrade ${{ inputs.helm_release_name }} .            \
+        --install                                                 \
+        --namespace ${{ inputs.app_name }}-${{ inputs.env_name }} \
+        --set image.tag=${{ inputs.image_tag }}                   \
+        ${{ steps.helm_values.outputs.FILES }}
