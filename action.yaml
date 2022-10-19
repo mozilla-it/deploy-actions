@@ -75,9 +75,9 @@ runs:
       shell: bash
       run: |
         if [[ "${{ inputs.project_id }}" == "" ]]; then
-        echo "::set-output name=SERVICE_ACCOUNT::deploy-${{ inputs.env_name }}@moz-fx-${{ inputs.app_name }}-${{ inputs.realm_name }}.iam.gserviceaccount.com"
+        echo "SERVICE_ACCOUNT=deploy-${{ inputs.env_name }}@moz-fx-${{ inputs.app_name }}-${{ inputs.realm_name }}.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
         else
-        echo "::set-output name=SERVICE_ACCOUNT::deploy-${{ inputs.env_name }}@${{ inputs.project_id }}.iam.gserviceaccount.com"
+        echo "SERVICE_ACCOUNT=deploy-${{ inputs.env_name }}@${{ inputs.project_id }}.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
         fi
 
     - id: gcp-auth
@@ -98,9 +98,9 @@ runs:
       shell: bash
       run: |
         if [[ "${{ inputs.helm_value_files }}" == "" ]]; then
-        echo "::set-output name=FILES::-f values-${{ inputs.env_name }}.yaml"
+          echo "FILES=-f values-${{ inputs.env_name }}.yaml" >> $GITHUB_OUTPUT
         else
-        echo "::set-output name=FILES::${{ inputs.helm_value_files }}"
+          echo "FILES=${{ inputs.helm_value_files }}" >> $GITHUB_OUTPUT
         fi
 
     - name: helm version
