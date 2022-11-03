@@ -121,6 +121,7 @@ runs:
       run: |
         helm upgrade ${{ inputs.helm_release_name }} .            \
         --install                                                 \
+        --dependency-update                                       \
         --namespace ${{ inputs.app_name }}-${{ inputs.env_name }} \
         ${{ steps.helm_values.outputs.FILES }}                    \
         --set image.tag=${{ inputs.image_tag }}                   \
