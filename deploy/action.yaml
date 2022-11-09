@@ -113,6 +113,12 @@ runs:
       shell: bash
       run: helm list -n ${{ inputs.app_name }}-${{ inputs.env_name }} -a
 
+    # Workaround for --dependency-update flag failing to update OCI packaged charts
+    - name: helm dependency update
+      shell: bash
+      working-directory: infra_repo/${{ inputs.helm_chart_path }}
+      run: helm dependency update
+
     # FIXME
     # - Look at adding --atomic or --wait as flags
     - name: helm install
