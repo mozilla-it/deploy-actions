@@ -57,6 +57,7 @@ runs:
               "attachments": [
                 {
                   "color": "#dbab09",
+                  "fallback": "${{ inputs.app_name }} ${{ inputs.env_name }}: start",
                   "blocks": [
                     {
                       "type": "section",
@@ -84,6 +85,7 @@ runs:
               "attachments": [
                 {
                   "color": "#28a745",
+                  "fallback": "${{ inputs.app_name }} ${{ inputs.env_name }}: end",
                   "blocks": [
                     {
                       "type": "section",
@@ -108,10 +110,10 @@ runs:
               ]
             },
             "custom": {
-              "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: ${{ inputs.message }}",
               "attachments": [
                 {
                   "color": "#28a745",
+                  "fallback": "${{ inputs.app_name }} ${{ inputs.env_name }}: custom",
                   "blocks": [
                     {
                       "type": "section",
