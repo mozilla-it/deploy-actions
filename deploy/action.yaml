@@ -48,6 +48,10 @@ inputs:
   helm_chart_path:
     description: Helm chart path within infrastructure repository , e.g. testapp1/k8s/testapp1/
     required: true
+  helm_timeout:
+    description: Helm chart timeout, defaults to `600`
+    required: false
+    default: "600"
   helm_values:
     description: Helm values specified with '--set' flag value, e.g. "--set 'foo.bar=value'"
     required: false
@@ -131,4 +135,5 @@ runs:
         --namespace ${{ inputs.app_name }}-${{ inputs.env_name }} \
         ${{ steps.helm_values.outputs.FILES }}                    \
         --set image.tag=${{ inputs.image_tag }}                   \
+        --timeout ${{ inputs.helm_timeout }}                      \
         ${{ inputs.helm_values }}
