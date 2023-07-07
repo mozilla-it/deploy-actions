@@ -10,6 +10,10 @@ inputs:
   app_name:
     description: Name of tenant app to deploy to, e.g. testapp1
     required: true
+  tag_value_path:
+    description: Path to Helm value for the image tag
+    default: image.tag
+    required: false
   image_tag:
     description: Name of the image tag
     required: true
@@ -129,11 +133,11 @@ runs:
       shell: bash
       working-directory: infra_repo/${{ inputs.helm_chart_path }}
       run: |
-        helm upgrade ${{ inputs.helm_release_name }} .            \
-        --install                                                 \
-        --dependency-update                                       \
-        --namespace ${{ inputs.app_name }}-${{ inputs.env_name }} \
-        ${{ steps.helm_values.outputs.FILES }}                    \
-        --set image.tag=${{ inputs.image_tag }}                   \
-        --timeout ${{ inputs.helm_timeout }}                      \
+        helm upgrade ${{ inputs.helm_release_name }} .              \
+        --install                                                   \
+        --dependency-update                                         \
+        --namespace ${{ inputs.app_name }}-${{ inputs.env_name }}   \
+        ${{ steps.helm_values.outputs.FILES }}                      \
+        --set ${{ inputs.tag_value_path }}=${{ inputs.image_tag }}  \
+        --timeout ${{ inputs.helm_timeout }}                        \
         ${{ inputs.helm_values }}
