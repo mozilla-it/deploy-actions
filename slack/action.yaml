@@ -15,7 +15,7 @@ inputs:
       required: true
       type: string
     type:
-      description: Message type to be sent, supported values 'start', 'end', 'custom'
+      description: Message type to be sent, supported values 'start', 'end', 'failed', 'custom'
       required: true
       type: string
     channel_id:
@@ -92,6 +92,34 @@ runs:
                       "text": {
                         "type": "mrkdwn",
                         "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: Deploy complete - ${{ inputs.ref }}"
+                      },
+                      "accessory": {
+                        "type": "button",
+                        "text": {
+                          "type": "plain_text",
+                          "text": "Github Actions",
+                          "emoji": true
+                        },
+                        "value": "click",
+                        "url": "${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}",
+                        "action_id": "button-action"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "failed": {
+              "attachments": [
+                {
+                  "color": "#a72841",
+                  "fallback": "${{ inputs.app_name }} ${{ inputs.env_name }}: failed",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: Deploy failed - ${{ inputs.ref }}"
                       },
                       "accessory": {
                         "type": "button",
