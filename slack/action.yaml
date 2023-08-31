@@ -35,6 +35,11 @@ inputs:
       required: false
       type: string
       default: ""
+    mentions:
+      description: Slack users or groups to mention in the message
+      required: false
+      type: string
+      default: ""
     update_ts:
       description: Message ts for updating sent messages
       required: false
@@ -63,7 +68,7 @@ runs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: Deploy started - ${{ inputs.ref }}"
+                        "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: Deploy started - ${{ inputs.ref }} ${{ inputs.mentions }}"
                       },
                       "accessory": {
                         "type": "button",
@@ -91,7 +96,7 @@ runs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: Deploy complete - ${{ inputs.ref }}"
+                        "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: Deploy complete - ${{ inputs.ref }} ${{ inputs.mentions }}"
                       },
                       "accessory": {
                         "type": "button",
@@ -119,7 +124,7 @@ runs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: Deploy failed - ${{ inputs.ref }}"
+                        "text": "${{ inputs.app_name }} ${{ inputs.env_name }}: Deploy failed - ${{ inputs.ref }} ${{ inputs.mentions }}"
                       },
                       "accessory": {
                         "type": "button",
