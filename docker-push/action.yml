@@ -1,0 +1,41 @@
+name: docker-push
+description: Push a Docker image to GAR.
+
+inputs:
+  local_image:
+    description: "The local Docker image to be pushed."
+    required: true
+  image_repo_host:
+    description: "The host name of the Docker repository to push the image to."
+    required: false
+    default: us-docker.pkg.dev
+  image_repo_path:
+    description: "The path of the Docker repository to push the image to, without the leading slash."
+    required: true
+  image_tag:
+    description: "The Dockaer image tag to be pushed."
+    required: false
+    default: latest
+  workload_identity_pool_project_number:
+    description: Project number of workload identity pool used for OIDC authentication
+    required: true
+  project_id:
+    description: GCP project_id used to construct the service account.
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: projects/${{ inputs.workload_identity_pool_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
+        service_account: artifact-writer@${{ inputs.project_id }}.iam.gserviceaccount.com
+    - uses: google-github-actions/setup-gcloud@v1
+    - run: |
+        gcloud --quiet auth configure-docker '${{ inputs.image_repo_host }}'
+        docker tag '${{ inputs.local_image }}' "$TARGET_IMAGE"
+        docker push "$TARGET_IMAGE"
+      env:
+        TARGET_IMAGE: ${{ inputs.image_repo_host }}/${{ inputs.image_repo_path }}:${{ inputs.image_tag }}
+      shell: sh
