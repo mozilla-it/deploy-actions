@@ -22,6 +22,9 @@ inputs:
   project_id:
     description: GCP project_id used to construct the service account.
     required: true
+  deployment_env:
+    description: If set, create a GitHub deployment in the given environment.
+    default: ""
 
 runs:
   using: composite
@@ -46,4 +49,15 @@ runs:
         docker push "$TARGET_IMAGE"
       env:
         TARGET_IMAGE: "${{ inputs.image_repo_host }}/${{ inputs.image_repo_path }}:${{ inputs.image_tag }}"
+      shell: sh
+    - name: Create GitHub deployment
+      if: inputs.deployment_env != ''
+      run: |
+        gh api "repos/${{ github.repository }}/deployments" \
+            -f environment="${{ inputs.deployment_env }}" \
+            -f ref="${{ github.ref }}" \
+            -F required_contexts[] \
+            -F payload[image_tag]="${{ inputs.image_tag }}"
+      env:
+        GH_TOKEN: ${{ github.token }}
       shell: sh
