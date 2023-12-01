@@ -91,13 +91,13 @@ runs:
         fi
 
     - name: gcp authentication
-      uses: google-github-actions/auth@v0
+      uses: google-github-actions/auth@v1
       with:
         service_account: ${{ steps.deployment_service_account.outputs.SERVICE_ACCOUNT }}
         workload_identity_provider: projects/${{ inputs.workload_identity_pool_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
 
     - name: get gke credentials
-      uses: google-github-actions/get-gke-credentials@v0
+      uses: google-github-actions/get-gke-credentials@v1
       with:
         cluster_name: ${{ inputs.k8s_cluster_name }}
         location: ${{ inputs.k8s_cluster_location }}
