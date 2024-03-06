@@ -64,7 +64,6 @@ jobs:
             done
           fi
           echo sanitized_name=$(echo "${{ matrix.chart }}" | sed 's/\//-/g') >> $GITHUB_OUTPUT
-          echo "${{ matrix.chart }} does not exist in ${{ github.base_ref }} ref"
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -98,7 +97,6 @@ jobs:
             done
           fi
           echo sanitized_name=$(echo "${{ matrix.chart }}" | sed 's/\//-/g') >> $GITHUB_OUTPUT
-          echo "${{ matrix.chart }} does not exist in ${{ github.base_ref }} ref"
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
