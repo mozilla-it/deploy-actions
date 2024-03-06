@@ -21,7 +21,7 @@ jobs:
   run_helm_chart_diff:
     permissions:
       contents: read
-      id-token: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Render and diff modified helm charts
