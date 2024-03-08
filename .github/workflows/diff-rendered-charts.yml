@@ -127,7 +127,14 @@ jobs:
           script: |
             const fs = require('fs');
             const comment_char_limit = 65536; // GitHub comment character limit
-            const diff = fs.readFileSync('diff.log', 'utf8');
+            const diff_file = 'diff.log';
+
+            if (fs.existsSync(diff_file)) {
+              var diff = fs.readFileSync(diff_file, 'utf8');
+            } else {
+              console.log(diff_file + " not found")
+              return
+            }
 
             function splitComment(comment, maxSize, sepEnd, sepStart, comStart) {
               // Adapted from Atlantis SplitComment function
