@@ -2,21 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-name: Matrix render and diff helm charts
-description: Renders BASE and REF helm charts then posts the diff of the rendered charts as a comment on the pull request 
+# Reusable workflow to render and diff helm charts between the head and base ref of a pull request
+# A comment is made on the pull request containing the diff output
 
-
+name: render and diff helm charts
 on:
   workflow_call:
-    inputs:
-      chart_path:
-        description: Path filter for helm charts
-        required: false
-        type: string
-        default: '**/k8s/**'
-
-env:
-  CHART_PATH: ${{ inputs.chart_path }}
 
 jobs:
   get_changed_helm_charts:
