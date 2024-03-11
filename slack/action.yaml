@@ -53,7 +53,7 @@ runs:
   using: composite
   steps:
     - id: slack
-      uses: slackapi/slack-github-action@v1.23.0
+      uses: slackapi/slack-github-action@v1.25.0
       env:
         SLACK_BOT_TOKEN: ${{ inputs.SLACK_BOT_TOKEN }}
         MESSAGE: >-
