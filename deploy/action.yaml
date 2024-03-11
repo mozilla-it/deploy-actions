@@ -154,7 +154,7 @@ runs:
         helm list \
         --filter ${{ inputs.helm_release_name }} \
         --namespace ${{ inputs.app_name }}-${{ inputs.env_name }}   \
-        --no-headers | awk -v app=10 '{print $app}' >> $GITHUB_OUTPUT
+        --no-headers | awk '{printf "app=%s",$10}' | tee $GITHUB_OUTPUT
 
     - name: helm chart version
       id: helm_chart_version
@@ -163,4 +163,4 @@ runs:
         helm list \
         --filter ${{ inputs.helm_release_name }} \
         --namespace ${{ inputs.app_name }}-${{ inputs.env_name }}   \
-        --no-headers | awk -v chart=9 '{print $chart}' >> $GITHUB_OUTPUT
+        --no-headers | awk '{printf "chart=%s",$9}' | tee $GITHUB_OUTPUT
