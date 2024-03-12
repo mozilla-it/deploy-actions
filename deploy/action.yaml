@@ -141,3 +141,29 @@ runs:
         --set ${{ inputs.tag_value_path }}=${{ inputs.image_tag }}  \
         --timeout ${{ inputs.helm_timeout }}                        \
         ${{ inputs.helm_values }}
+
+    # List installed charts after upgrade
+    - name: helm list
+      if: always()
+      shell: bash
+      run: helm list -n ${{ inputs.app_name }}-${{ inputs.env_name }} -a
+
+    - name: helm app version
+      if: always()
+      id: helm_app_version
+      shell: bash
+      run: |
+        helm list \
+        --filter ${{ inputs.helm_release_name }} \
+        --namespace ${{ inputs.app_name }}-${{ inputs.env_name }}   \
+        --no-headers | awk '{printf "deployed_chart_app_version=%s",$10}' | tee $GITHUB_OUTPUT
+
+    - name: helm chart version
+      if: always()
+      id: helm_chart_version
+      shell: bash
+      run: |
+        helm list \
+        --filter ${{ inputs.helm_release_name }} \
+        --namespace ${{ inputs.app_name }}-${{ inputs.env_name }}   \
+        --no-headers | awk '{printf "deployed_chart_version=%s",$9}' | tee $GITHUB_OUTPUT
