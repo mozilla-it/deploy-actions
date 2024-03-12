@@ -48,7 +48,7 @@ jobs:
           git fetch origin ${{ github.head_ref }}
           git checkout  ${{ github.head_ref }} --
           if [ -f "${{ matrix.chart }}/Chart.yaml" ]; then
-            helm dependency build "${{ matrix.chart }}"
+            helm dependency update "${{ matrix.chart }}"
             values_files="${{ matrix.chart }}"/values-*
             for values_file in $(basename -a $values_files); do
               helm template "${{ matrix.chart }}" -f "${{ matrix.chart }}/values.yaml" -f "${{ matrix.chart }}/${values_file}" --output-dir "shared/head-charts/${{ matrix.chart }}/${values_file}"
@@ -81,7 +81,7 @@ jobs:
           git fetch origin ${{ github.base_ref }}
           git checkout  ${{ github.base_ref }} --
           if [ -f "${{ matrix.chart }}/Chart.yaml" ]; then
-            helm dependency build "${{ matrix.chart }}"
+            helm dependency update "${{ matrix.chart }}"
             values_files="${{ matrix.chart }}"/values-*
             for values_file in $(basename -a $values_files); do
               helm template "${{ matrix.chart }}" -f "${{ matrix.chart }}/values.yaml" -f "${{ matrix.chart }}/${values_file}" --output-dir "shared/base-charts/${{ matrix.chart }}/${values_file}"
