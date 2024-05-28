@@ -9,6 +9,9 @@ name: render and diff helm charts
 on:
   workflow_call:
 
+env:
+  HEAD_REF: ${{ github.head_ref }}
+
 jobs:
   get_changed_helm_charts:
     runs-on: ubuntu-latest
@@ -45,8 +48,8 @@ jobs:
         id: render_head
         run: |
           mkdir -p shared/head-charts
-          git fetch origin ${{ github.head_ref }}
-          git checkout  ${{ github.head_ref }} --
+          git fetch origin "$HEAD_REF"
+          git checkout  "$HEAD_REF" --
           if [ -f "${{ matrix.chart }}/Chart.yaml" ]; then
             helm dependency update "${{ matrix.chart }}"
             values_files="${{ matrix.chart }}"/values-*
