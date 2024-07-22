@@ -40,7 +40,12 @@ from cryptography.hazmat.backends import default_backend
     required=True,
 )
 def main(key, repo, organization, app_id, install_id):
-    private_pem = key.encode()
+    if key.endswith('.pem'):
+      keyfile = open(key, 'r').read()
+      private_pem = keyfile.encode()
+    else:
+      private_pem = key.encode()
+
     main.private_key = default_backend().load_pem_private_key(private_pem, None)
     main.gh_repo = repo
     main.gh_org = organization
