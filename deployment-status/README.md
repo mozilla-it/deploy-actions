@@ -84,4 +84,4 @@ A GitHub app with the permissions to create/modify deployments and/or releases o
 
 - `INSTALLATION_ID` - The installation ID of the GitHub app installed in the target repository
 
-- `PRIVATE_KEY` - The private key of the required GitHub app
+- `PRIVATE_KEY` - The private key of the required GitHub app. This can be an environment variable, or a file mounted with the `.pem` extension. 
