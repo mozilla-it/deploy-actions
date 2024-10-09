@@ -120,7 +120,7 @@ jobs:
           for chart in ${{ needs.get_changed_helm_charts.outputs.charts }}; do
             chart_diff_output=$(diff -r "shared/base-charts/${chart}" "shared/head-charts/${chart}" || true)
             if [ -n "$chart_diff_output" ]; then
-              echo -e "Changes found in chart: ${chart}\n$(diff -ru shared/base-charts/${chart} shared/head-charts/${chart})\n" >> diff.log
+              echo -e "Changes found in chart: ${chart}\n$(diff -ruN shared/base-charts/${chart} shared/head-charts/${chart})\n" >> diff.log
             fi
           done
       - name: post diff as comment on pull request
