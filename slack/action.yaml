@@ -35,6 +35,11 @@ inputs:
       required: false
       type: string
       default: ""
+    color:
+      description: Custom color when inputs.type is set to 'custom'
+      required: false
+      type: string
+      default: "#28a745"
     mentions:
       description: Slack users or groups to mention in the message
       required: false
@@ -145,7 +150,7 @@ runs:
             "custom": {
               "attachments": [
                 {
-                  "color": "#28a745",
+                  "color": "${{ inputs.color }}",
                   "fallback": "${{ inputs.app_name }} ${{ inputs.env_name }}: custom",
                   "blocks": [
                     {
