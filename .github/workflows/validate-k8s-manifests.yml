@@ -129,22 +129,19 @@ jobs:
 
           echo "kubeconform_exit_code=$exit_code" >> $GITHUB_OUTPUT
 
-      - name: post kubeconform validation comment (and minimize old ones)
+      - name: minimize previous kubeconform comments
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const summary = fs.readFileSync('kubeconform.log', 'utf8');
             const commentHeader = "Validated rendered Kubernetes manifests.";
-            const body = `${commentHeader}\n\n\`\`\`text\n${summary}\n\`\`\``;
 
-            const comments = await github.rest.issues.listComments({
+            const { data: comments } = await github.rest.issues.listComments({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo
             });
 
-            for (const comment of comments.data) {
+            for (const comment of comments) {
               if (
                 comment.body.startsWith(commentHeader) &&
                 comment.user.type === "Bot"
@@ -157,7 +154,6 @@ jobs:
                     }) {
                       minimizedComment {
                         isMinimized
-                        minimizedReason
                       }
                     }
                   }
@@ -167,12 +163,53 @@ jobs:
               }
             }
 
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
+      - name: post kubeconform comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('kubeconform.log', 'utf8');
+            const commentHeader = "Validated rendered Kubernetes manifests.";
+            const commentCharLimit = 65536;
+
+            function splitComment(comment, maxSize, sepEnd, sepStart, comStart) {
+              if (comment.length <= (maxSize - comStart.length)) {
+                return [comStart + comment];
+              }
+
+              const maxWithSep = maxSize - sepEnd.length - sepStart.length;
+              const numComments = Math.ceil(comment.length / maxWithSep);
+              const comments = [];
+
+              for (let i = 0; i < numComments; i++) {
+                const start = i * maxWithSep;
+                const end = Math.min(comment.length, (i + 1) * maxWithSep);
+                let chunk = comment.slice(start, end);
+
+                if (i < numComments - 1) chunk += sepEnd;
+                if (i > 0) chunk = sepStart + chunk;
+                else chunk = comStart + chunk;
+
+                comments.push(chunk);
+              }
+
+              return comments;
+            }
+
+            const sepEnd = "\n```\n\n**Note**: Output continued in next comment.";
+            const sepStart = "Continued from previous comment.\n\n```text\n";
+            const comStart = `${commentHeader}\n\n\`\`\`text\n`;
+
+            const comments = splitComment(summary, commentCharLimit, sepEnd, sepStart, comStart);
+
+            for (const body of comments) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body
+              });
+            }
 
       - name: fail workflow if kubeconform validation fails
         run: |
