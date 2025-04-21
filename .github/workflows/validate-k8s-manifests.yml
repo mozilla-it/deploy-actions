@@ -171,21 +171,23 @@ jobs:
 
             const fullLog = fs.readFileSync('kubeconform.log', 'utf8').trim();
 
-            // Summary line
+            // Extract the summary line (or provide a fallback)
             const lines = fullLog.split('\n');
             const summaryLine = lines.find(line => line.startsWith('Summary:'));
 
             const marker = '<!-- kubeconform-marker -->';
             const commentCharLimit = 65536;
 
-            // Build full message wrapped in collapsible section
-            const detailWrapped = `<details><summary>Show full output</summary>\n\n\`\`\`text\n${fullLog}\n\`\`\`\n</details>`;
+            const sepEnd = "\n```\n</details>\n\n**Note:** Continued in next comment.";
+            const sepStart = "Continued from previous comment:\n<details><summary>Show full output</summary>\n\n```text\n";
+            const comStart = `${summaryLine}\n\n<details><summary>Show full output</summary>\n\n\`\`\`text\n`;
 
             function splitComment(content, maxSize, sepEnd, sepStart, comStart) {
               // Adapted from Atlantis SplitComment function
               // https://github.com/runatlantis/atlantis/blob/main/server/events/vcs/common/common.go#L18
               if (content.length <= (maxSize - comStart.length)) {
-                return [comStart + content + marker];
+                // Close the block properly and add marker outside
+                return [`${comStart}${content}\n\`\`\`\n</details>\n${marker}`];
               }
 
               const maxWithSep = maxSize - sepEnd.length - sepStart.length;
@@ -197,19 +199,22 @@ jobs:
                 const end = Math.min(content.length, (i + 1) * maxWithSep);
                 let chunk = content.slice(start, end);
 
-                if (i < numComments - 1) chunk += sepEnd;
-                if (i > 0) chunk = sepStart + chunk;
-                else chunk = comStart + chunk;
+                if (i < numComments - 1) {
+                  chunk += sepEnd;
+                }
 
-                comments.push(chunk + marker);
+                if (i > 0) {
+                  chunk = sepStart + chunk;
+                } else {
+                  chunk = comStart + chunk;
+                }
+
+                // Always close the block and append marker outside the visible text
+                comments.push(`${chunk}\n\`\`\`\n</details>\n${marker}`);
               }
 
               return comments;
             }
-
-            const sepEnd = "\n```\n</details>\n\n**Note:** Continued in next comment.";
-            const sepStart = "Continued from previous comment:\n<details><summary>Show full output</summary>\n\n```text\n";
-            const comStart = `${summaryLine}\n\n<details><summary>Show full output</summary>\n\n\`\`\`text\n`;
 
             const comments = splitComment(fullLog, commentCharLimit, sepEnd, sepStart, comStart);
 
