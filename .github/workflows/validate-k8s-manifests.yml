@@ -168,8 +168,16 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const summary = fs.readFileSync('kubeconform.log', 'utf8');
-            const commentHeader = "Validated rendered Kubernetes manifests.";
+
+            const fullLog = fs.readFileSync('kubeconform.log', 'utf8').trim();
+
+            // Extract the last line for the summary
+            const lines = fullLog.split('\n');
+            const summaryLine = lines.find(line => line.startsWith('Summary:'));
+            const detailOutput = `<details><summary>Show full output</summary>\n\n\`\`\`text\n${fullLog}\n\`\`\`\n</details>`;
+
+            const fullComment = `${summaryLine}\n\n${detailOutput}`;
+
             const commentCharLimit = 65536;
 
             function splitComment(comment, maxSize, sepEnd, sepStart, comStart) {
@@ -196,11 +204,11 @@ jobs:
               return comments;
             }
 
-            const sepEnd = "\n```\n\n**Note**: Output continued in next comment.";
-            const sepStart = "Continued from previous comment.\n\n```text\n";
-            const comStart = `${commentHeader}\n\n\`\`\`text\n`;
+            const sepEnd = "\n```\n</details>\n\n**Note**: Output continued in next comment.";
+            const sepStart = "Continued from previous comment.\n<details><summary>Show full output</summary>\n\n```text\n";
+            const comStart = `${summaryLine}\n\n<details><summary>Show full output</summary>\n\n\`\`\`text\n`;
 
-            const comments = splitComment(summary, commentCharLimit, sepEnd, sepStart, comStart);
+            const comments = splitComment(fullLog, commentCharLimit, sepEnd, sepStart, comStart);
 
             for (const body of comments) {
               await github.rest.issues.createComment({
