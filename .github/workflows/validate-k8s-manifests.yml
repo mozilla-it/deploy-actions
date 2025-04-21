@@ -133,7 +133,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const commentHeader = "Validated rendered Kubernetes manifests.";
+            const marker = "<!-- kubeconform-marker -->";
 
             const { data: comments } = await github.rest.issues.listComments({
               issue_number: context.issue.number,
@@ -143,7 +143,7 @@ jobs:
 
             for (const comment of comments) {
               if (
-                comment.body.startsWith(commentHeader) &&
+                comment.body.includes(marker) &&
                 comment.user.type === "Bot"
               ) {
                 await github.graphql(`
@@ -171,41 +171,44 @@ jobs:
 
             const fullLog = fs.readFileSync('kubeconform.log', 'utf8').trim();
 
-            // Extract the last line for the summary
+            // Summary line
             const lines = fullLog.split('\n');
             const summaryLine = lines.find(line => line.startsWith('Summary:'));
-            const detailOutput = `<details><summary>Show full output</summary>\n\n\`\`\`text\n${fullLog}\n\`\`\`\n</details>`;
 
-            const fullComment = `${summaryLine}\n\n${detailOutput}`;
-
+            const marker = '<!-- kubeconform-marker -->';
             const commentCharLimit = 65536;
 
-            function splitComment(comment, maxSize, sepEnd, sepStart, comStart) {
-              if (comment.length <= (maxSize - comStart.length)) {
-                return [comStart + comment];
+            // Build full message wrapped in collapsible section
+            const detailWrapped = `<details><summary>Show full output</summary>\n\n\`\`\`text\n${fullLog}\n\`\`\`\n</details>`;
+
+            function splitComment(content, maxSize, sepEnd, sepStart, comStart) {
+              // Adapted from Atlantis SplitComment function
+              // https://github.com/runatlantis/atlantis/blob/main/server/events/vcs/common/common.go#L18
+              if (content.length <= (maxSize - comStart.length)) {
+                return [comStart + content + marker];
               }
 
               const maxWithSep = maxSize - sepEnd.length - sepStart.length;
-              const numComments = Math.ceil(comment.length / maxWithSep);
+              const numComments = Math.ceil(content.length / maxWithSep);
               const comments = [];
 
               for (let i = 0; i < numComments; i++) {
                 const start = i * maxWithSep;
-                const end = Math.min(comment.length, (i + 1) * maxWithSep);
-                let chunk = comment.slice(start, end);
+                const end = Math.min(content.length, (i + 1) * maxWithSep);
+                let chunk = content.slice(start, end);
 
                 if (i < numComments - 1) chunk += sepEnd;
                 if (i > 0) chunk = sepStart + chunk;
                 else chunk = comStart + chunk;
 
-                comments.push(chunk);
+                comments.push(chunk + marker);
               }
 
               return comments;
             }
 
-            const sepEnd = "\n```\n</details>\n\n**Note**: Output continued in next comment.";
-            const sepStart = "Continued from previous comment.\n<details><summary>Show full output</summary>\n\n```text\n";
+            const sepEnd = "\n```\n</details>\n\n**Note:** Continued in next comment.";
+            const sepStart = "Continued from previous comment:\n<details><summary>Show full output</summary>\n\n```text\n";
             const comStart = `${summaryLine}\n\n<details><summary>Show full output</summary>\n\n\`\`\`text\n`;
 
             const comments = splitComment(fullLog, commentCharLimit, sepEnd, sepStart, comStart);
