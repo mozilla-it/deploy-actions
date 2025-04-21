@@ -186,7 +186,6 @@ jobs:
             }
 
       - name: fail workflow if kubeconform validation fails
-#        if: steps.validate_k8s_manifests.outputs.kubeconform_exit_code != '0'
         run: |
-          echo "Kubeconform failed with exit code ${{ steps.validate_k8s_manifests.outputs.kubeconform_exit_code }}"
-          exit 0
+          # We want this workflow to fail if kubeconform validation fails, but after posting the comment
+          exit ${{ steps.validate_k8s_manifests.outputs.kubeconform_exit_code }}
