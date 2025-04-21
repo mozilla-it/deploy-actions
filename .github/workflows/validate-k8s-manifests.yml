@@ -144,13 +144,12 @@ jobs:
               repo: context.repo.repo
             });
 
-            // Minimize previous matching comments from this bot
             for (const comment of comments.data) {
               if (
                 comment.body.startsWith(commentHeader) &&
                 comment.user.type === "Bot"
               ) {
-                await github.rest.graphql(`
+                await github.graphql(`
                   mutation MinimizeComment($subjectId: ID!) {
                     minimizeComment(input: {
                       subjectId: $subjectId,
@@ -168,7 +167,6 @@ jobs:
               }
             }
 
-            // Post new comment
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
