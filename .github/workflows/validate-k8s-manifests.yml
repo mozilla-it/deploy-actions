@@ -102,14 +102,22 @@ jobs:
       - name: validate k8s manifests
         id: validate_k8s_manifests
         run: |
-          set -euo pipefail
-            echo "${{ needs.get_changed_helm_charts.outputs.charts }}" | while read -r chart; do
-              echo "Validating ${chart}..."
+          set -o pipefail
+          exit_code=0
+
+          echo "${{ needs.get_changed_helm_charts.outputs.charts }}" | while read -r chart; do
+            echo "Validating ${chart}..."
+            if [ -d "shared/charts/${chart}" ]; then
               /usr/local/bin/kubeconform \
                 -schema-location default \
                 -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
-                -summary "shared/charts/${chart}"
-            done >> kubeconform.log
+                -summary "shared/charts/${chart}" || exit_code=$?
+            else
+              echo "No rendered manifests found for ${chart}."
+            fi
+          done >> kubeconform.log 2>&1
+
+          echo "kubeconform_exit_code=$exit_code" >> $GITHUB_OUTPUT
 
       - name: post kubeconform validation summary as comment on pull request
         if: needs.get_changed_helm_charts.outputs.charts != ''
@@ -166,3 +174,9 @@ jobs:
                 body: comment
               })
             }
+
+      - name: fail workflow if kubeconform validation fails
+        if: steps.validate_k8s_manifests.outputs.kubeconform_exit_code != '0'
+        run: |
+          echo "Kubeconform failed with exit code ${{ steps.validate_k8s_manifests.outputs.kubeconform_exit_code }}"
+          exit 1
