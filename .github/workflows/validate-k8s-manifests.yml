@@ -116,7 +116,7 @@ jobs:
                   -summary \
                   -output json \
                   "shared/charts/${chart}" \
-                   | jq '.resources |= map(.filename |= sub("^shared/charts/${chart}"; ""))' >> kubeconform.json 2>&1; then
+                   | jq --arg chartDir "shared/charts/${chart}/k8s/${chart}/" '.resources |= map(.filename |= sub("^" + $chartDir + "/"; ""))' >> kubeconform.json 2>&1; then
                 exit_code=1
               fi
             else
