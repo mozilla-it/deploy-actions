@@ -66,7 +66,7 @@ jobs:
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "shared-head-${{ steps.render_head.outputs.sanitized_name }}"
+          name: "k8s-manifests-${{ steps.render_head.outputs.sanitized_name }}"
           path: "shared"
 
   validate_rendered_helm_chart_manifests:
@@ -95,7 +95,7 @@ jobs:
       - name: download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: shared-*
+          pattern: k8s-manifests-*
           merge-multiple: true
           path: "shared"
 
