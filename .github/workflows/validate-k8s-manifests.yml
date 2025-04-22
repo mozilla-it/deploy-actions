@@ -1,0 +1,230 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# Reusable workflow to render helm charts and validate their manifests using kubeconform
+# A comment is made on the pull request containing the output
+
+name: render helm charts and validate k8s manifests
+on:
+  workflow_call:
+
+env:
+  HEAD_REF: ${{ github.head_ref }}
+  KUBECONFORM_VERSION: "0.6.7"
+  KUBECONFORM_SHA256: "95f14e87aa28c09d5941f11bd024c1d02fdc0303ccaa23f61cef67bc92619d73"
+  KUBECONFORM_BASE_URL: "https://github.com/yannh/kubeconform/releases/download"
+  KUBECONFORM_SCHEMA_LOCATION: "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+
+jobs:
+  get_changed_helm_charts:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix_charts: ${{ steps.find_changed_charts.outputs.matrix_changed_charts }}
+      charts: ${{ steps.find_changed_charts.outputs.changed_charts }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+         fetch-depth: '100'
+
+      - name: find changed helm charts
+        id: find_changed_charts
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+          echo matrix_changed_charts=$(git diff --name-only ${{ github.base_ref }}...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq | jq -R 'split("\n")' | jq -s 'flatten(1)') >> $GITHUB_OUTPUT
+          echo changed_charts=$(git diff --name-only ${{ github.base_ref }}...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq) >> $GITHUB_OUTPUT
+
+  render_head_ref_charts:
+    runs-on: ubuntu-latest
+    needs: get_changed_helm_charts
+    strategy:
+      matrix:
+        chart: ${{ fromJSON(needs.get_changed_helm_charts.outputs.matrix_charts) }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: setup helm
+        uses: azure/setup-helm@v4.0.0
+
+      - name: render ${{ matrix.chart }} from head ref
+        id: render_head
+        run: |
+          mkdir -p shared/head-charts
+          git fetch origin "$HEAD_REF"
+          git checkout  "$HEAD_REF" --
+          if [ -f "${{ matrix.chart }}/Chart.yaml" ]; then
+            helm dependency update "${{ matrix.chart }}"
+            values_files="${{ matrix.chart }}"/values-*
+            for values_file in $(basename -a $values_files); do
+              env_name=$(basename "$values_file" | sed -E 's/^values-(.+)\.ya?ml$/\1/')
+              helm template $(basename -a "${{ matrix.chart }}") "${{ matrix.chart }}" -f "${{ matrix.chart }}/values.yaml" -f "${{ matrix.chart }}/${values_file}" --output-dir "shared/charts/${{ matrix.chart }}/${env_name}"
+            done
+          fi
+          echo sanitized_name=$(echo "${{ matrix.chart }}" | sed 's/\//-/g') >> $GITHUB_OUTPUT
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "k8s-manifests-${{ steps.render_head.outputs.sanitized_name }}"
+          path: "shared"
+
+  validate_rendered_helm_chart_manifests:
+    runs-on: ubuntu-latest
+    needs:
+      - get_changed_helm_charts
+      - render_head_ref_charts
+    steps:
+      - name: install kubeconform
+        run: |
+          set -euo pipefail
+
+          FILENAME="kubeconform-linux-amd64.tar.gz"
+          DOWNLOAD_URL="${KUBECONFORM_BASE_URL}/v${KUBECONFORM_VERSION}/${FILENAME}"
+
+          echo "Downloading kubeconform from ${DOWNLOAD_URL}..."
+          wget -q "$DOWNLOAD_URL" -O "$FILENAME"
+
+          echo "${KUBECONFORM_SHA256}  $FILENAME" | sha256sum -c -
+
+          echo "Extracting kubeconform..."
+          tar -xzf "$FILENAME"
+          chmod +x kubeconform
+          sudo mv kubeconform /usr/local/bin/kubeconform
+
+      - name: download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: k8s-manifests-*
+          merge-multiple: true
+          path: "shared"
+
+      - name: validate k8s manifests
+        id: validate_k8s_manifests
+        run: |
+          set -eo pipefail
+
+          charts="${{ needs.get_changed_helm_charts.outputs.charts }}"
+          exit_code=0
+
+          for chart in $charts; do
+            echo "Validating ${chart}..."
+
+            if [ -d "shared/charts/${chart}" ]; then
+              if ! /usr/local/bin/kubeconform \
+                  -schema-location default \
+                  -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
+                  -summary \
+                  -output json \
+                  "shared/charts/${chart}" \
+                   | jq --arg chartDir "shared/charts/${chart}/" '.resources |= map(.filename |= sub("^" + $chartDir; ""))' >> kubeconform.json 2>&1; then
+                exit_code=1
+              fi
+            else
+              echo "Warning: Rendered output for ${chart} not found." >> kubeconform.json
+            fi
+          done
+
+          echo "kubeconform_exit_code=$exit_code" >> $GITHUB_OUTPUT
+
+      - name: minimize previous kubeconform comments
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = "<!-- kubeconform-marker -->";
+
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            for (const comment of comments) {
+              if (
+                comment.body.includes(marker) &&
+                comment.user.type === "Bot"
+              ) {
+                await github.graphql(`
+                  mutation MinimizeComment($subjectId: ID!) {
+                    minimizeComment(input: {
+                      subjectId: $subjectId,
+                      classifier: OUTDATED
+                    }) {
+                      minimizedComment {
+                        isMinimized
+                      }
+                    }
+                  }
+                `, {
+                  subjectId: comment.node_id
+                });
+              }
+            }
+
+      - name: post kubeconform comment
+        if: steps.validate_k8s_manifests.outputs.kubeconform_exit_code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const json = JSON.parse(fs.readFileSync('kubeconform.json', 'utf8'));
+
+            const marker = '<!-- kubeconform-marker -->';
+            const commentCharLimit = 65536;
+
+            // Format the summary line
+            const { valid, invalid, errors, skipped } = json.summary;
+            const summaryLine = `Kubernetes Manifest Validation: ${valid + invalid + errors + skipped} resources found - Valid: ${valid}, Invalid: ${invalid}, Errors: ${errors}, Skipped: ${skipped}`;
+
+            const errorDetails = json.resources.map(r => {
+              return `${r.filename} - ${r.kind} ${r.name} failed validation: ${r.msg}`;
+            }).join('\n');
+
+            const fullOutput = `<details><summary>Show full output</summary>\n\n\`\`\`text\n${errorDetails}\n\`\`\`\n</details>`;
+
+            const sepEnd = "\n```\n</details>\n\nNote: Continued in next comment.";
+            const sepStart = "Continued from previous comment:\n<details><summary>Show full output</summary>\n\n```text\n";
+            const comStart = `${summaryLine}\n\n<details><summary>Show full output</summary>\n\n\`\`\`text\n`;
+
+            function splitComment(content, maxSize, sepEnd, sepStart, comStart) {
+              // Adapted from Atlantis SplitComment function
+              // https://github.com/runatlantis/atlantis/blob/main/server/events/vcs/common/common.go#L18
+              if (content.length <= (maxSize - comStart.length)) {
+                return [`${comStart}${content}\n\`\`\`\n</details>\n${marker}`];
+              }
+
+              const maxWithSep = maxSize - sepEnd.length - sepStart.length;
+              const numComments = Math.ceil(content.length / maxWithSep);
+              const comments = [];
+
+              for (let i = 0; i < numComments; i++) {
+                const start = i * maxWithSep;
+                const end = Math.min(content.length, (i + 1) * maxWithSep);
+                let chunk = content.slice(start, end);
+
+                if (i < numComments - 1) chunk += sepEnd;
+                if (i > 0) chunk = sepStart + chunk;
+                else chunk = comStart + chunk;
+
+                comments.push(`${chunk}\n\`\`\`\n</details>\n${marker}`);
+              }
+
+              return comments;
+            }
+
+            const comments = splitComment(errorDetails, commentCharLimit, sepEnd, sepStart, comStart);
+
+            for (const body of comments) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body
+              });
+            }
+
+      - name: fail workflow if kubeconform validation fails
+        run: |
+          # We want this workflow to fail if kubeconform validation fails, but after posting the comment
+          exit ${{ steps.validate_k8s_manifests.outputs.kubeconform_exit_code }}
