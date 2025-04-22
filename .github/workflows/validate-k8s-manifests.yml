@@ -111,8 +111,6 @@ jobs:
             echo "Validating ${chart}..."
 
             if [ -d "shared/charts/${chart}" ]; then
-              echo "Cleaning filenames with chartDir prefix: shared/charts/${chart}/"
-
               if ! /usr/local/bin/kubeconform \
                   -schema-location default \
                   -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
@@ -164,6 +162,7 @@ jobs:
             }
 
       - name: post kubeconform comment
+        if: steps.validate_k8s_manifests.outputs.kubeconform_exit_code != '0'
         uses: actions/github-script@v7
         with:
           script: |
@@ -176,7 +175,7 @@ jobs:
 
             // Format the summary line
             const { valid, invalid, errors, skipped } = json.summary;
-            const summaryLine = `Kubeconform Summary: ${valid + invalid + errors + skipped} resources found - Valid: ${valid}, Invalid: ${invalid}, Errors: ${errors}, Skipped: ${skipped}`;
+            const summaryLine = `Kubernetes Manifest Validation: ${valid + invalid + errors + skipped} resources found - Valid: ${valid}, Invalid: ${invalid}, Errors: ${errors}, Skipped: ${skipped}`;
 
             const errorDetails = json.resources.map(r => {
               return `${r.filename} - ${r.kind} ${r.name} failed validation: ${r.msg}`;
