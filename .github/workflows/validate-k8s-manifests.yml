@@ -111,14 +111,15 @@ jobs:
             echo "Validating ${chart}..."
 
             if [ -d "shared/charts/${chart}" ]; then
-              echo "Cleaning filenames with chartDir prefix: shared/charts/${chart}/k8s/${chart}/"
+              echo "Cleaning filenames with chartDir prefix: shared/charts/${chart}/"
+
               if ! /usr/local/bin/kubeconform \
                   -schema-location default \
                   -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
                   -summary \
                   -output json \
                   "shared/charts/${chart}" \
-                   | jq --arg chartDir "shared/charts/${chart}/k8s/${chart}/" '.resources |= map(.filename |= sub("^" + $chartDir; ""))' >> kubeconform.json 2>&1; then
+                   | jq --arg chartDir "shared/charts/${chart}/" '.resources |= map(.filename |= sub("^" + $chartDir; ""))' >> kubeconform.json 2>&1; then
                 exit_code=1
               fi
             else
