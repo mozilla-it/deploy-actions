@@ -113,8 +113,9 @@ jobs:
               if ! /usr/local/bin/kubeconform \
                   -schema-location default \
                   -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
-                  -summary "shared/charts/${chart}" \
+                  -summary \
                   -output json \
+                  "shared/charts/${chart}" \
                    | jq '.resources |= map(.filename |= sub("^shared/charts/${chart}"; ""))' >> kubeconform.json 2>&1; then
                 exit_code=1
               fi
