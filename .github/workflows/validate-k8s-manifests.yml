@@ -59,7 +59,7 @@ jobs:
             values_files="${{ matrix.chart }}"/values-*
             for values_file in $(basename -a $values_files); do
               env_name=$(basename "$values_file" | sed -E 's/^values-(.+)\.ya?ml$/\1/')
-              helm template "${{ matrix.chart }}" -f "${{ matrix.chart }}/values.yaml" -f "${{ matrix.chart }}/${values_file}" --output-dir "shared/charts/${{ matrix.chart }}/${env_name}"
+              helm template $(basename -a "${{ matrix.chart }}") "${{ matrix.chart }}" -f "${{ matrix.chart }}/values.yaml" -f "${{ matrix.chart }}/${values_file}" --output-dir "shared/charts/${{ matrix.chart }}/${env_name}"
             done
           fi
           echo sanitized_name=$(echo "${{ matrix.chart }}" | sed 's/\//-/g') >> $GITHUB_OUTPUT
@@ -113,17 +113,13 @@ jobs:
               if ! /usr/local/bin/kubeconform \
                   -schema-location default \
                   -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
-                  -summary "shared/charts/${chart}" >> kubeconform.log 2>&1; then
+                  -summary "shared/charts/${chart}" \
+                  -output json \
+                   | jq '.resources |= map(.filename |= sub("^shared/charts/${chart}"; ""))' >> kubeconform.json 2>&1; then
                 exit_code=1
               fi
-
-              # Remove chart base dir and default release name
-              sed -i \
-                -e "s|shared/charts/${chart}/||g" \
-                -e "s/release-name-//g" \
-                kubeconform.log
             else
-              echo "Warning: Rendered output for ${chart} not found." >> kubeconform.log
+              echo "Warning: Rendered output for ${chart} not found." >> kubeconform.json
             fi
           done
 
@@ -169,16 +165,22 @@ jobs:
           script: |
             const fs = require('fs');
 
-            const fullLog = fs.readFileSync('kubeconform.log', 'utf8').trim();
-
-            // Extract the summary line (or provide a fallback)
-            const lines = fullLog.split('\n');
-            const summaryLine = lines.find(line => line.startsWith('Summary:'));
+            const json = JSON.parse(fs.readFileSync('kubeconform.json', 'utf8'));
 
             const marker = '<!-- kubeconform-marker -->';
             const commentCharLimit = 65536;
 
-            const sepEnd = "\n```\n</details>\n\n**Note:** Continued in next comment.";
+            // Format the summary line
+            const { valid, invalid, errors, skipped } = json.summary;
+            const summaryLine = `Kubeconform Summary: ${valid + invalid + errors + skipped} resources found - Valid: ${valid}, Invalid: ${invalid}, Errors: ${errors}, Skipped: ${skipped}`;
+
+            const errorDetails = json.resources.map(r => {
+              return `${r.filename} - ${r.kind} ${r.name} failed validation: ${r.msg}`;
+            }).join('\n');
+
+            const fullOutput = `<details><summary>Show full output</summary>\n\n\`\`\`text\n${errorDetails}\n\`\`\`\n</details>`;
+
+            const sepEnd = "\n```\n</details>\n\nNote: Continued in next comment.";
             const sepStart = "Continued from previous comment:\n<details><summary>Show full output</summary>\n\n```text\n";
             const comStart = `${summaryLine}\n\n<details><summary>Show full output</summary>\n\n\`\`\`text\n`;
 
@@ -186,7 +188,6 @@ jobs:
               // Adapted from Atlantis SplitComment function
               // https://github.com/runatlantis/atlantis/blob/main/server/events/vcs/common/common.go#L18
               if (content.length <= (maxSize - comStart.length)) {
-                // Close the block properly and add marker outside
                 return [`${comStart}${content}\n\`\`\`\n</details>\n${marker}`];
               }
 
@@ -199,24 +200,17 @@ jobs:
                 const end = Math.min(content.length, (i + 1) * maxWithSep);
                 let chunk = content.slice(start, end);
 
-                if (i < numComments - 1) {
-                  chunk += sepEnd;
-                }
+                if (i < numComments - 1) chunk += sepEnd;
+                if (i > 0) chunk = sepStart + chunk;
+                else chunk = comStart + chunk;
 
-                if (i > 0) {
-                  chunk = sepStart + chunk;
-                } else {
-                  chunk = comStart + chunk;
-                }
-
-                // Always close the block and append marker outside the visible text
                 comments.push(`${chunk}\n\`\`\`\n</details>\n${marker}`);
               }
 
               return comments;
             }
 
-            const comments = splitComment(fullLog, commentCharLimit, sepEnd, sepStart, comStart);
+            const comments = splitComment(errorDetails, commentCharLimit, sepEnd, sepStart, comStart);
 
             for (const body of comments) {
               await github.rest.issues.createComment({
