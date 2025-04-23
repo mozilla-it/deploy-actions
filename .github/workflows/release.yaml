@@ -10,12 +10,15 @@ jobs:
     name: release
     runs-on:
       - ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: setup node.js
         uses: actions/setup-node@v4
