@@ -31,34 +31,39 @@ runs:
   steps:
     - name: Authenticate to GCP
       id: auth
-      uses: google-github-actions/auth@v1
+      uses: google-github-actions/auth@3a3c4c57d294ef65efaaee4ff17b22fa88dd3c69 #v1
       with:
         workload_identity_provider: "projects/${{ inputs.workload_identity_pool_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions"
         service_account: "artifact-writer@${{ inputs.project_id }}.iam.gserviceaccount.com"
         token_format: access_token
         create_credentials_file: false
     - name: Log in to GAR
-      uses: docker/login-action@v3
+      uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 #v3
       with:
         registry: "${{ inputs.image_repo_host }}"
         username: oauth2accesstoken
         password: "${{ steps.auth.outputs.access_token }}"
     - name: Tag and push Docker image
       run: |
-        docker tag '${{ inputs.local_image }}' "$TARGET_IMAGE"
+        docker tag "$LOCAL_IMAGE" "$TARGET_IMAGE"
         docker push "$TARGET_IMAGE"
       env:
         TARGET_IMAGE: "${{ inputs.image_repo_host }}/${{ inputs.image_repo_path }}:${{ inputs.image_tag }}"
+        LOCAL_IMAGE: ${{ inputs.local_image }}
       shell: sh
     - name: Create GitHub deployment
       if: inputs.deployment_env != ''
       run: |
-        gh api "repos/${{ github.repository }}/deployments" \
-            -f environment="${{ inputs.deployment_env }}" \
-            -f ref="${{ github.ref }}" \
+        gh api "repos/${GITHUB_REPOSITORY}/deployments" \
+            -f environment="${DEPLOYMENT_ENV}" \
+            -f ref="${GITHUB_REF}" \
             -F auto_merge=false \
             -F required_contexts[] \
-            -F payload[image_tag]="${{ inputs.image_tag }}"
+            -F payload[image_tag]="${IMAGE_TAG}"
       env:
+        DEPLOYMENT_ENV: ${{ inputs.deployment_env }}
         GH_TOKEN: ${{ github.token }}
+        GITHUB_REG: ${{ github.ref }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        IMAGE_TAG: ${{ inputs.image_tag }}
       shell: sh

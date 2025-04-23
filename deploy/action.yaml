@@ -84,20 +84,25 @@ runs:
       name: deployment service account
       shell: bash
       run: |
-        if [[ "${{ inputs.project_id }}" == "" ]]; then
-        echo "SERVICE_ACCOUNT=deploy-${{ inputs.env_name }}@moz-fx-${{ inputs.app_name }}-${{ inputs.realm_name }}.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
+        if [[ "$PROJECT_ID" == "" ]]; then
+        echo "SERVICE_ACCOUNT=deploy-$ENV_NAME@moz-fx-$APP_NAME-$REALM_NAME.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
         else
-        echo "SERVICE_ACCOUNT=deploy-${{ inputs.env_name }}@${{ inputs.project_id }}.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
+        echo "SERVICE_ACCOUNT=deploy-$ENV_NAME@$PROJECT_ID.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
         fi
+      env:
+        PROJECT_ID: ${{ inputs.project_id }}
+        REALM: ${{ inputs.realm_name }}
+        APP_NAME: ${{ inputs.app_name }}
+        ENV_NAME: ${{ inputs.env_name }}
 
     - name: gcp authentication
-      uses: google-github-actions/auth@v2
+      uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f #v2
       with:
         service_account: ${{ steps.deployment_service_account.outputs.SERVICE_ACCOUNT }}
         workload_identity_provider: projects/${{ inputs.workload_identity_pool_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
 
     - name: get gke credentials
-      uses: google-github-actions/get-gke-credentials@v2
+      uses: google-github-actions/get-gke-credentials@9025e8f90f2d8e0c3dafc3128cc705a26d992a6a #v2
       with:
         cluster_name: ${{ inputs.k8s_cluster_name }}
         location: ${{ inputs.k8s_cluster_location }}
@@ -107,11 +112,14 @@ runs:
       id: helm_values
       shell: bash
       run: |
-        if [[ "${{ inputs.helm_value_files }}" == "" ]]; then
-          echo "FILES=-f values-${{ inputs.env_name }}.yaml" >> $GITHUB_OUTPUT
+        if [[ "${HELM_VALUE_FILES}" == "" ]]; then
+          echo "FILES=-f values-${ENV_NAME}.yaml" >> $GITHUB_OUTPUT
         else
-          echo "FILES=${{ inputs.helm_value_files }}" >> $GITHUB_OUTPUT
+          echo "FILES=${HELM_VALUE_FILES}" >> $GITHUB_OUTPUT
         fi
+      env:
+        ENV_NAME: ${{ inputs.env_name }}
+        HELM_VALUE_FILES: ${{ inputs.helm_value_files }}
 
     - name: helm version
       shell: bash
@@ -119,34 +127,52 @@ runs:
 
     - name: helm list
       shell: bash
-      run: helm list -n ${{ inputs.app_name }}-${{ inputs.env_name }} -a
+      run: helm list -n ${APP_NAME}-${ENV_NAME} -a
+      env:
+        APP_NAME: ${{ inputs.app_name }}
+        ENV_NAME: ${{ inputs.env_name }}
 
     # Workaround for --dependency-update flag failing to update OCI packaged charts
     - name: helm dependency update
       shell: bash
-      working-directory: infra_repo/${{ inputs.helm_chart_path }}
+      working-directory: infra_repo/${HELM_CHART_PATH}
       run: helm dependency update
+      env:
+        HELM_CHART_PATH: ${{ inputs.helm_chart_path }}
 
     # FIXME
     # - Look at adding --atomic or --wait as flags
     - name: helm install
       shell: bash
-      working-directory: infra_repo/${{ inputs.helm_chart_path }}
+      working-directory: infra_repo/${HELM_CHART_PATH}
       run: |
-        helm upgrade ${{ inputs.helm_release_name }} .              \
+        helm upgrade ${HELM_RELEASE_NAME} .                         \
         --install                                                   \
         --dependency-update                                         \
-        --namespace ${{ inputs.app_name }}-${{ inputs.env_name }}   \
-        ${{ steps.helm_values.outputs.FILES }}                      \
-        --set ${{ inputs.tag_value_path }}=${{ inputs.image_tag }}  \
-        --timeout ${{ inputs.helm_timeout }}                        \
-        ${{ inputs.helm_values }}
+        --namespace ${APP_NAME}-${ENV_NAME}                         \
+        ${VALUES}                                                   \
+        --set ${TAG_VALUE_PATH}=${IMAGE_TAG}                        \
+        --timeout ${HELM_TIMEOUT}                                   \
+        ${HELM_VALUES}
+      env:
+        APP_NAME: ${{ inputs.app_name }}
+        ENV_NAME: ${{ inputs.env_name }}
+        HELM_CHART_PATH: ${{ inputs.helm_chart_path }}
+        HELM_RELEASE_NAME: ${{ inputs.helm_release_name }}
+        HELM_TIMEOUT: ${{ inputs.helm_timeout }}
+        HELM_VALUES: ${{ inputs.helm_values }}
+        IMAGE_TAG: ${{ inputs.image_tag }}
+        TAG_VALUE_PATH: ${{ inputs.tag_value_path }}
+        VALUES: ${{ steps.helm_values.outputs.FILES }}
 
     # List installed charts after upgrade
     - name: helm list
       if: always()
       shell: bash
-      run: helm list -n ${{ inputs.app_name }}-${{ inputs.env_name }} -a
+      run: helm list -n ${APP_NAME}-${ENV_NAME} -a
+      env:
+        APP_NAME: ${{ inputs.app_name }}
+        ENV_NAME: ${{ inputs.env_name }}
 
     - name: helm app version
       if: always()
@@ -154,9 +180,13 @@ runs:
       shell: bash
       run: |
         helm list \
-        --filter ${{ inputs.helm_release_name }} \
-        --namespace ${{ inputs.app_name }}-${{ inputs.env_name }}   \
+        --filter ${HELM_RELEASE_NAME} \
+        --namespace ${APP_NAME}-${ENV_NAME}   \
         --no-headers | awk '{printf "deployed_chart_app_version=%s",$10}' | tee $GITHUB_OUTPUT
+      env:
+        APP_NAME: ${{ inputs.app_name }}
+        ENV_NAME: ${{ inputs.env_name }}
+        HELM_RELEASE_NAME: ${{ inputs.helm_release_name }}
 
     - name: helm chart version
       if: always()
@@ -164,6 +194,10 @@ runs:
       shell: bash
       run: |
         helm list \
-        --filter ${{ inputs.helm_release_name }} \
-        --namespace ${{ inputs.app_name }}-${{ inputs.env_name }}   \
+        --filter ${HELM_RELEASE_NAME} \
+        --namespace ${APP_NAME}-${ENV_NAME}   \
         --no-headers | awk '{printf "deployed_chart_version=%s",$9}' | tee $GITHUB_OUTPUT
+      env:
+        APP_NAME: ${{ inputs.app_name }}
+        ENV_NAME: ${{ inputs.env_name }}
+        HELM_RELEASE_NAME: ${{ inputs.helm_release_name }}
