@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
          fetch-depth: '100'
-         persist-credentials: false
+         persist-credentials: true # We are using these credentials in later steps
 
       - name: find changed helm charts
         id: find_changed_charts
@@ -44,7 +44,7 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: true # We are using these credentials in later steps
 
       - name: setup helm
         uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
@@ -81,7 +81,7 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: true # We are using these credentials in later steps
 
       - name: setup helm
         uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
