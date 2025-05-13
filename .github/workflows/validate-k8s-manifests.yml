@@ -15,6 +15,7 @@ env:
   KUBECONFORM_SHA256: "95f14e87aa28c09d5941f11bd024c1d02fdc0303ccaa23f61cef67bc92619d73"
   KUBECONFORM_BASE_URL: "https://github.com/yannh/kubeconform/releases/download"
   KUBECONFORM_SCHEMA_LOCATION: "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+  KUBECONFORM_CUSTOM_SCHEMA_LOCATION: "https://raw.githubusercontent.com/mozilla/mozcloud/main/crdSchemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
 
 jobs:
   get_changed_helm_charts:
@@ -121,6 +122,7 @@ jobs:
               if ! /usr/local/bin/kubeconform \
                   -schema-location default \
                   -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
+                  -schema-location "${KUBECONFORM_CUSTOM_SCHEMA_LOCATION}" \
                   -summary \
                   -output json \
                   "shared/charts/${chart}" \
