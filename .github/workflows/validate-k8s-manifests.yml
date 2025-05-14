@@ -111,26 +111,48 @@ jobs:
       - name: validate k8s manifests
         id: validate_k8s_manifests
         run: |
-          set -eo pipefail
-
+          # To support multi-chart tenants we need to normalize the kubeconform output
+          # We are populating it with the standard kubeconform structure, but will append to these values during subsequent runs
+          echo '{"summary":{"valid":0,"invalid":0,"errors":0,"skipped":0},"resources":[]}' > kubeconform.json
           exit_code=0
 
           for chart in $CHARTS; do
             echo "Validating ${chart}..."
 
             if [ -d "shared/charts/${chart}" ]; then
-              if ! /usr/local/bin/kubeconform \
-                  -schema-location default \
-                  -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
-                  -schema-location "${KUBECONFORM_CUSTOM_SCHEMA_LOCATION}" \
-                  -summary \
-                  -output json \
-                  "shared/charts/${chart}" \
-                   | jq --arg chartDir "shared/charts/${chart}/" '.resources |= map(.filename |= sub("^" + $chartDir; ""))' >> kubeconform.json 2>&1; then
+              tmp_output=$(mktemp)
+
+              # Always run kubeconform and capture output, even if it fails
+              /usr/local/bin/kubeconform \
+                -schema-location default \
+                -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
+                -schema-location "${KUBECONFORM_CUSTOM_SCHEMA_LOCATION}" \
+                -summary \
+                -output json \
+                "shared/charts/${chart}" > "$tmp_output" 2>&1 || exit_code=1
+
+              # Merge output only if it's valid JSON
+              if jq empty "$tmp_output" >/dev/null 2>&1; then
+                jq --arg chartDir "shared/charts/${chart}/" \
+                   --slurpfile base kubeconform.json \
+                   '
+                   {
+                     summary: {
+                       valid: ($base[0].summary.valid + .summary.valid),
+                       invalid: ($base[0].summary.invalid + .summary.invalid),
+                       errors: ($base[0].summary.errors + .summary.errors),
+                       skipped: ($base[0].summary.skipped + .summary.skipped)
+                     },
+                     resources: ($base[0].resources + (.resources | map(.filename |= sub("^" + $chartDir; ""))))
+                   }
+                   ' "$tmp_output" > kubeconform.tmp && mv kubeconform.tmp kubeconform.json
+              else
+                echo "Warning: kubeconform output for ${chart} is not valid JSON:"
+                cat "$tmp_output"
                 exit_code=1
               fi
             else
-              echo "Warning: Rendered output for ${chart} not found." >> kubeconform.json
+              echo "Warning: Rendered output for ${chart} not found."
             fi
           done
 
