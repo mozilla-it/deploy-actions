@@ -158,7 +158,9 @@ def delete_release(release_id):
 
 
 def create_deployment(tag, environment):
-    data = f'{{"ref": "{tag}", "environment": "{environment}", "task":"deploy", "auto_merge": false, "required_contexts": [] }}'
+    release_url = f"https://github.com/{main.gh_org}/{main.gh_repo}/releases/tag/{tag}"
+    description = f"Deployment for tag {tag}. See release: {release_url}"
+    data = f'{{"ref": "{tag}", "environment": "{environment}", "task":"deploy", "auto_merge": false, "required_contexts": [], "description": description }}'
 
     resp = requests.post(
         f"https://api.github.com/repos/{main.gh_org}/{main.gh_repo}/deployments",
