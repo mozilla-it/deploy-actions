@@ -4,7 +4,7 @@
 
 # Reusable workflow to render helm charts and check if they meet PSS level restricted
 
-name: render and diff helm charts
+name: render and psa-check helm charts
 on:
   workflow_call:
     inputs:
