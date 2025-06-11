@@ -38,6 +38,8 @@ jobs:
         id: diff_helm_charts
         run: |
           for chart in ${CHARTS}; do
+              echo "$chart"
+              echo "$CHARTS"
               echo "$chart" | psa-checker --level ${{ inputs.pss_level }}  -f -
           done
         env:
