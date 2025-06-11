@@ -39,7 +39,6 @@ jobs:
         run: |
           for chart in ${CHARTS}; do
               echo "$chart" | psa-checker --level ${{ inputs.pss_level }}  -f -
-            fi
           done
         env:
           CHARTS: ${{ needs.get_changed_helm_charts.outputs.charts }}
