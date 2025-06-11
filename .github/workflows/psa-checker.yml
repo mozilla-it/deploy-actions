@@ -73,8 +73,8 @@ jobs:
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "shared-head-${{ steps.render_head.outputs.sanitized_name }}"
-          path: "shared"
+          name: "psa-checker-${{ steps.render_head.outputs.sanitized_name }}"
+          path: "psa-checker"
 
   render_base_ref_charts:
     runs-on: ubuntu-latest
@@ -112,8 +112,8 @@ jobs:
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "shared-base-${{ steps.render_base.outputs.sanitized_name }}"
-          path: "shared"
+          name: "psa-checker-${{ steps.render_base.outputs.sanitized_name }}"
+          path: "psa-checker"
 
   check_pod_security_level:
     runs-on: ubuntu-latest
