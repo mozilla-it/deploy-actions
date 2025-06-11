@@ -61,5 +61,5 @@ jobs:
           # Loop over each `values-*` dir and check PSS levels
           cd "shared/charts/${{ matrix.chart }}/"
           for ENV_DIR in "*/"; do
-              cat "$ENV_DIR/*/*/*.yaml" | docker run -i "$PSA_CHECKER_IMAGE" --level "$PSS_LEVEL" -f -
+              cat "$ENV_DIR/*/*/*.yaml" | docker run -i "$PSA_CHECKER_IMAGE" -- --level "$PSS_LEVEL" -f -
           done
