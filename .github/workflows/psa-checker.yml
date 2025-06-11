@@ -15,7 +15,8 @@ on:
         type: string
 env:
   HEAD_REF: ${{ github.head_ref }}
-  PSA_CHECKER_IMAGE: 'us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/psa-checker:567481c4bf3d981cef05a4fe021e5dfa0caa8378'
+  PSA_CHECKER_IMAGE: 'us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/psa-checker'
+  PSA_CHECKER_SHA: '567481c4bf3d981cef05a4fe021e5dfa0caa8378'
 
 jobs:
   get_changed_helm_charts:
@@ -61,5 +62,5 @@ jobs:
           # Loop over each `values-*` dir and check PSS levels
           cd "shared/charts/${{ matrix.chart }}/"
           for ENV_DIR in "*/"; do
-              cat "$ENV_DIR/*/*/*.yaml" | docker run -i "$PSA_CHECKER_IMAGE" -- --level "$PSS_LEVEL" -f -
+              cat "$ENV_DIR/*/*/*.yaml" | docker run -i "$PSA_CHECKER_IMAGE":"$PSA_CHECKER_SHA" --level "$PSS_LEVEL" -f -
           done
