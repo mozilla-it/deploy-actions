@@ -57,8 +57,7 @@ jobs:
         id: psa_check
         run: |
           # Loop over each `values-*` dir and check PSS levels
-          find . -type d -print
-          cd "shared/charts/${{ matrix.chart }}/head-charts/${{ matrix.chart }}/"
-          for HELM_DIR in "*/"; do
-              cat "$HELM_DIR/*/*.yaml" | docker run -i "$PSA_CHECKER_IMAGE" --level ${{ inputs.pss_level }} -f -
+          cd "shared/charts/${{ matrix.chart }}/"
+          for ENV_DIR in "*/"; do
+              cat "$ENV_DIR/*/*/*.yaml" | docker run -i "$PSA_CHECKER_IMAGE" --level ${{ inputs.pss_level }} -f -
           done
