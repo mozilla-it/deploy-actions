@@ -18,6 +18,26 @@ env:
   HEAD_REF: ${{ github.head_ref }}
 
 jobs:
+  get_changed_helm_charts:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix_charts: ${{ steps.find_changed_charts.outputs.matrix_changed_charts }}
+      charts: ${{ steps.find_changed_charts.outputs.changed_charts }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+         fetch-depth: '100'
+         persist-credentials: true # We are using these credentials in later steps
+
+      - name: find changed helm charts
+        id: find_changed_charts
+        run: |
+          git fetch origin ${GITHUB_BASE_REF}:${GITHUB_BASE_REF}
+          echo matrix_changed_charts=$(git diff --name-only ${GITHUB_BASE_REF}...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq | jq -R 'split("\n")' | jq -s 'flatten(1)') >> $GITHUB_OUTPUT
+          echo changed_charts=$(git diff --name-only ${GITHUB_BASE_REF}...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq) >> $GITHUB_OUTPUT
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
   check_pod_security_level:
     runs-on: ubuntu-latest
     steps:
