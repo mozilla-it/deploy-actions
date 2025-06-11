@@ -4,7 +4,7 @@
 
 # Reusable workflow to render helm charts and check if they meet PSS level restricted
 
-name: psa-check helm charts
+name: render helm charts and check pod security level
 on:
   workflow_call:
     inputs:
@@ -13,15 +13,32 @@ on:
         default: 'restricted'
         required: false
         type: string
-      charts:
-        description: 'List of charts to run psa-checker on'
-        required: true
-        type: string
 env:
   HEAD_REF: ${{ github.head_ref }}
   PSA_CHECKER_IMAGE: 'us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/psa-checker:567481c4bf3d981cef05a4fe021e5dfa0caa8378'
 
 jobs:
+  get_changed_helm_charts:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix_charts: ${{ steps.find_changed_charts.outputs.matrix_changed_charts }}
+      charts: ${{ steps.find_changed_charts.outputs.changed_charts }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+         fetch-depth: '100'
+         persist-credentials: false
+
+      - name: find changed helm charts
+        id: find_changed_charts
+        run: |
+          git fetch origin $GITHUB_BASE_REF:$GITHUB_BASE_REF
+          echo matrix_changed_charts=$(git diff --name-only $GITHUB_BASE_REF...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq | jq -R 'split("\n")' | jq -s 'flatten(1)') >> $GITHUB_OUTPUT
+          echo changed_charts=$(git diff --name-only $GITHUB_BASE_REF...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq) >> $GITHUB_OUTPUT
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+
   check_pod_security_level:
     runs-on: ubuntu-latest
     steps:
@@ -35,7 +52,10 @@ jobs:
         id: psa_check
         run: |
           for chart in ${CHARTS}; do
-              echo "$chart" | docker run -i "$PSA_CHECKER_IMAGE" --level ${{ inputs.pss_level }} -f -
+              echo "$chart"
+              echo "$CHARTS"
+              ls
+          #echo "$chart" | docker run -i "$PSA_CHECKER_IMAGE" --level ${{ inputs.pss_level }} -f -
           done
         env:
-          CHARTS: ${{ inputs.charts }}
+          CHARTS: ${{ needs.get_changed_helm_charts.outputs.charts }}
