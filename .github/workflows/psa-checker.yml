@@ -4,7 +4,7 @@
 
 # Reusable workflow to render helm charts and check if they meet PSS level restricted
 
-name: render and psa-check helm charts
+name: psa-check helm charts
 on:
   workflow_call:
     inputs:
@@ -32,10 +32,10 @@ jobs:
           merge-multiple: true
           path: "shared"
       - name: run psa-checker
-        id: diff_helm_charts
+        id: psa_check
         run: |
           for chart in ${CHARTS}; do
-              echo "$chart" | docker run -i "$PSA_CHECKER_IMAGE"  --level ${{ inputs.pss_level }} -f -
+              echo "$chart" | docker run -i "$PSA_CHECKER_IMAGE" --level ${{ inputs.pss_level }} -f -
           done
         env:
           CHARTS: ${{ inputs.charts }}
