@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
          fetch-depth: '100'
-         persist-credentials: false
+         persist-credentials: true # We are using these credentials in later steps
 
       - name: find changed helm charts
         id: find_changed_charts
