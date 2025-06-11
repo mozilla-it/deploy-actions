@@ -31,7 +31,7 @@ jobs:
       - name: download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: shared-*
+          pattern: "k8s-manifests-*"
           merge-multiple: true
           path: "shared"
       - name: run psa-checker
