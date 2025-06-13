@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
       - name: Build Docker image
         id: build
         run: ...
@@ -33,7 +35,6 @@ jobs:
           image_tags: |
             us-docker.pkg.dev/moz-fx-tenant-realm/tenant-realm/my-image:latest
             us-docker.pkg.dev/moz-fx-tenant-realm/tenant-realm/my-image:v1.0.0
-          workload_identity_pool_project_number: 123456789012
           project_id: moz-fx-tenant-realm
-          deployment_env: ${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}
+          workload_identity_pool_project_number: ${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}
 ```
