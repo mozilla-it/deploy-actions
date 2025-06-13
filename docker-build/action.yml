@@ -42,15 +42,19 @@ runs:
     - name: Generate MozCloud Tag
       id: mozcloud-tag
       shell: bash
+      env:
+        REF_TYPE: ${{ github.ref_type }}
+        REF_NAME: ${{ github.ref_name }}
+        IMAGE_TAG_METADATA: ${{ input.image_tag_metadata }}
       run: |
-        if [[ "${{ github.ref_type }}" == "tag" ]]; then
-          tag="${{ github.ref_name }}"
+        if [[ "${REF_TYPE}" == "tag" ]]; then
+          tag="${REF_NAME}"
         else
           tag="$(git rev-parse --short=10 HEAD)"
         fi
         # append metadata if present
-        if [[ -n "${{ inputs.image_tag_metadata }}" ]]; then
-          tag="${tag}--${{ inputs.image_tag_metadata }}"
+        if [[ -n "$metadata" ]]; then
+          tag="${tag}--${IMAGE_TAG_METADATA}"
         fi
         echo "Setting IMAGE_TAG=${tag} as output"
         echo "IMAGE_TAG=${tag}" >> "$GITHUB_OUTPUT"
@@ -66,8 +70,10 @@ runs:
           type=raw,value=${{ (inputs.should_tag_latest == 'true' && latest) || ''}}
     - name: Build image
       uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 #v6.18.0
+      env:
+        IMAGE_BUILD_CONTEXT: ${{ inputs.image_build_context }}
       with:
-        context: ${{ inputs.image_build_context }}
+        context: ${IMAGE_BUILD_CONTEXT}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
