@@ -16,25 +16,15 @@ This GitHub Action is designed to push Docker images to Google Artifact Registry
 ## Example Usage
 
 ```yaml
-jobs:
-  push-image:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
-      - name: Build Docker image
-        id: build
-        run: ...
-      - name: Push Docker image to GAR
-        uses: mozilla-it/deploy-actions/docker-push@v4
-        with:
-          gar_location: us-central1
-          # typically provided from another step's output ${{ steps.build.outputs.image_tags }}
-          image_tags: |
-            us-docker.pkg.dev/moz-fx-tenant-realm/tenant-realm/my-image:latest
-            us-docker.pkg.dev/moz-fx-tenant-realm/tenant-realm/my-image:v1.0.0
-          project_id: moz-fx-tenant-realm
-          workload_identity_pool_project_number: ${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}
+- name: Push Docker image to GAR and GHCR
+  uses: mozilla-it/deploy-actions/docker-push@v4
+  with:
+    gar_location: us
+    # typically provided from another step's output
+    image_tags: |
+      ghcr.io/mozilla/my-repo/my-image:v1.0.0
+      us-docker.pkg.dev/moz-fx-tenant-realm/tenant-realm/my-image:v1.0.0
+    should_authenticate_to_ghcr: true
+    project_id: moz-fx-tenant-realm
+    workload_identity_pool_project_number: ${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}
 ```
