@@ -1,0 +1,83 @@
+name: docker-build
+description: Build a Mozcloud service image
+inputs:
+  image_name:
+    description: Name to give to the built image
+    required: true
+  gar_location:
+    description: GCP region where GAR is located
+    required: true
+    default: us
+  gar_name:
+    description: GAR Name
+    required: true
+  project_id:
+    description: GCP project id
+    required: true
+  image_build_context:
+    description: Path to image context for `docker build`
+    required: true
+    default: ./
+  image_tag_metadata:
+    description: Optional metadata to append to image tag (e.g. for a tagged commit `v1.2.3` and metadata `dev`, the final image tag will be `v1.2.3--dev`)
+    required: false
+  should_tag_ghcr:
+    description: Whether to tag images to be pushed to ghcr.io.
+    required: false
+    default: "false"
+  should_tag_latest:
+    description: Whether to tag images as `latest`.
+    required: false
+    default: "false"    
+
+outputs:
+  image_tags:
+    description: "Generated Docker image tags"
+    value: ${{ steps.meta.outputs.tags }}
+
+runs:
+  using: composite
+  steps:
+    - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 #v3.10.0
+    - name: Generate MozCloud Tag
+      id: mozcloud-tag
+      shell: bash
+      env:
+        REF_TYPE: ${{ github.ref_type }}
+        REF_NAME: ${{ github.ref_name }}
+        IMAGE_TAG_METADATA: ${{ input.image_tag_metadata }}
+      run: |
+        if [[ "${REF_TYPE}" == "tag" ]]; then
+          tag="${REF_NAME}"
+        else
+          tag="$(git rev-parse --short=10 HEAD)"
+        fi
+        # append metadata if present
+        if [[ -n "$metadata" ]]; then
+          tag="${tag}--${IMAGE_TAG_METADATA}"
+        fi
+        echo "Setting IMAGE_TAG=${tag} as output"
+        echo "IMAGE_TAG=${tag}" >> "$GITHUB_OUTPUT"
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 #v5.7.0
+      with:
+        images: |
+          ${{ inputs.gar_location }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.gar_name }}/${{ inputs.image_name }}
+          ${{ (inputs.should_tag_ghcr == 'true' && format('ghcr.io/{0}/{1}', github.repository, inputs.image_name)) || '' }}
+        tags: |
+          type=raw,value=${{ steps.mozcloud-tag.outputs.IMAGE_TAG }}
+          type=raw,value=${{ (inputs.should_tag_latest == 'true' && latest) || ''}}
+    - name: Build image
+      uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 #v6.18.0
+      env:
+        IMAGE_BUILD_CONTEXT: ${{ inputs.image_build_context }}
+      with:
+        context: ${IMAGE_BUILD_CONTEXT}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
+        load: true
+        push: false
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
