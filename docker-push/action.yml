@@ -19,10 +19,7 @@ inputs:
   project_id:
     description: GCP project_id used to construct the service account.
     required: true
-  deployment_env:
-    description: If set, create a GitHub deployment in the given environment.
-    required: false
-    default: ""
+
 
 runs:
   using: composite
@@ -56,19 +53,4 @@ runs:
         while IFS= read -r image_tag; do
             docker push $image_tag 
         done <<< "${IMAGE_TAGS}"
-    - name: Create GitHub deployment
-      if: inputs.deployment_env != ''
-      run: |
-        gh api "repos/${GITHUB_REPOSITORY}/deployments" \
-            -f environment="${DEPLOYMENT_ENV}" \
-            -f ref="${GITHUB_REF}" \
-            -F auto_merge=false \
-            -F required_contexts[] \
-            -F payload[image_tag]="${IMAGE_TAG}"
-      env:
-        DEPLOYMENT_ENV: ${{ inputs.deployment_env }}
-        GH_TOKEN: ${{ github.token }}
-        GITHUB_REG: ${{ github.ref }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-        IMAGE_TAG: ${{ inputs.image_tag }}
-      shell: sh
+
