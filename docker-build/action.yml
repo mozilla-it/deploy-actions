@@ -53,7 +53,7 @@ runs:
           tag="$(git rev-parse --short=10 HEAD)"
         fi
         # append metadata if present
-        if [[ -n "$metadata" ]]; then
+        if [[ -n "${IMAGE_TAG_METADATA}" ]]; then
           tag="${tag}--${IMAGE_TAG_METADATA}"
         fi
         echo "Setting IMAGE_TAG=${tag} as output"
