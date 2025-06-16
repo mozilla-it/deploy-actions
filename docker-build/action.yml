@@ -114,10 +114,11 @@ runs:
         tags: ${{ steps.set-tags.outputs.tags }}
     - name: Build image
       uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 #v6.18.0
-      env:
-        IMAGE_BUILD_CONTEXT: ${{ inputs.image_build_context }}
       with:
-        context: ${IMAGE_BUILD_CONTEXT}
+        # We can't use the intermediate env var trick to appease zizmor in this
+        # case. We'll have to rely on docker/build-push-action to handle
+        # santizing this input
+        context: ${{ inputs.image_build_context }} # zizmor: ignore[template-injection]
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
