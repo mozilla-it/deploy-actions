@@ -69,12 +69,20 @@ runs:
         IMAGE_NAME: ${{ inputs.image_name }}
         SHOULD_TAG_GHCR: ${{ inputs.should_tag_ghcr }}
       run: |
-        images="${GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${GAR_NAME}/${IMAGE_NAME}"
+        images=( "${GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${GAR_NAME}/${IMAGE_NAME}" )
         if [[ "${SHOULD_TAG_GHCR}" == "true" ]]; then
-          images="${images}"$'\n'"ghcr.io/${{ github.repository }}/${IMAGE_NAME}"
+          images+=( "ghcr.io/${{ github.repository }}/${IMAGE_NAME}" )
         fi
-        echo -e "Generated Images:\n${images}"
-        echo -e "IMAGES=<<EOF\n${images}\nEOF" >> "$GITHUB_OUTPUT"
+
+        # Debug output
+        echo "Generated Images:"
+        printf '%s\n' "${images[@]}"
+
+        {
+          echo "images<<EOF"
+          printf '%s\n' "${images[@]}"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
 
     - name: Set tag list
       shell: bash
@@ -83,13 +91,21 @@ runs:
         SHOULD_TAG_LATEST: ${{ inputs.should_tag_latest }}
         IMAGE_TAG: ${{ steps.mozcloud-tag.outputs.image_tag }}
       run: |
-        tags="type=raw,value=${IMAGE_TAG}"
+        tags=( "type=raw,value=${IMAGE_TAG}" )
         if [[ "${SHOULD_TAG_LATEST}" == "true" ]]; then
-          tags="${tags}"$'\n'"type=raw,value=latest"
+          tags+=( "type=raw,value=latest" )
         fi
-        echo -e "Generated Tags:\n${tags}"
-        echo -e "TAGS=<<EOF\n${tags}\nEOF" >> "$GITHUB_OUTPUT"
-       
+
+        # Debug output
+        echo "Generated Tags:"
+        printf '%s\n' "${tags[@]}"
+
+        {
+          echo "tags<<EOF"
+          printf '%s\n' "${tags[@]}"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
     - name: Docker meta
       id: meta
       uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 #v5.7.0
