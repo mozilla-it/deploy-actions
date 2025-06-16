@@ -45,7 +45,7 @@ runs:
       env:
         REF_TYPE: ${{ github.ref_type }}
         REF_NAME: ${{ github.ref_name }}
-        IMAGE_TAG_METADATA: ${{ input.image_tag_metadata }}
+        IMAGE_TAG_METADATA: ${{ inputs.image_tag_metadata }}
       run: |
         if [[ "${REF_TYPE}" == "tag" ]]; then
           tag="${REF_NAME}"
@@ -57,17 +57,45 @@ runs:
           tag="${tag}--${IMAGE_TAG_METADATA}"
         fi
         echo "Setting IMAGE_TAG=${tag} as output"
-        echo "IMAGE_TAG=${tag}" >> "$GITHUB_OUTPUT"
+        echo "image_tag=${tag}" >> "$GITHUB_OUTPUT"
+
+    - name: Set image list
+      shell: bash
+      id: set-images
+      env:
+        GAR_LOCATION: ${{ inputs.gar_location }}
+        PROJECT_ID: ${{ inputs.project_id }}
+        GAR_NAME: ${{ inputs.gar_name }}
+        IMAGE_NAME: ${{ inputs.image_name }}
+        SHOULD_TAG_GHCR: ${{ inputs.should_tag_ghcr }}
+      run: |
+        images="${GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${GAR_NAME}/${IMAGE_NAME}"
+        if [[ "${SHOULD_TAG_GHCR}" == "true" ]]; then
+          images="${images}"$'\n'"ghcr.io/${{ github.repository }}/${IMAGE_NAME}"
+        fi
+        echo -e "Generated Images:\n${images}"
+        echo -e "IMAGES=<<EOF\n${images}\nEOF" >> "$GITHUB_OUTPUT"
+
+    - name: Set tag list
+      shell: bash
+      id: set-tags
+      env:
+        SHOULD_TAG_LATEST: ${{ inputs.should_tag_latest }}
+        IMAGE_TAG: ${{ steps.mozcloud-tag.outputs.image_tag }}
+      run: |
+        tags="type=raw,value=${IMAGE_TAG}"
+        if [[ "${SHOULD_TAG_LATEST}" == "true" ]]; then
+          tags="${tags}"$'\n'"type=raw,value=latest"
+        fi
+        echo -e "Generated Tags:\n${tags}"
+        echo -e "TAGS=<<EOF\n${tags}\nEOF" >> "$GITHUB_OUTPUT"
+       
     - name: Docker meta
       id: meta
       uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 #v5.7.0
       with:
-        images: |
-          ${{ inputs.gar_location }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.gar_name }}/${{ inputs.image_name }}
-          ${{ (inputs.should_tag_ghcr == 'true' && format('ghcr.io/{0}/{1}', github.repository, inputs.image_name)) || '' }}
-        tags: |
-          type=raw,value=${{ steps.mozcloud-tag.outputs.IMAGE_TAG }}
-          type=raw,value=${{ (inputs.should_tag_latest == 'true' && latest) || ''}}
+        images: ${{ steps.set-images.outputs.images }}
+        tags: ${{ steps.set-tags.outputs.tags }}
     - name: Build image
       uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 #v6.18.0
       env:

@@ -19,6 +19,9 @@ inputs:
   project_id:
     description: GCP project_id used to construct the service account.
     required: true
+  service_account_name:
+    description: Service account used to authenticate to GAR
+    default: artifact-writer
 
 
 runs:
@@ -29,7 +32,7 @@ runs:
       uses: google-github-actions/auth@3a3c4c57d294ef65efaaee4ff17b22fa88dd3c69 #v1
       with:
         workload_identity_provider: "projects/${{ inputs.workload_identity_pool_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions"
-        service_account: "artifact-writer@${{ inputs.project_id }}.iam.gserviceaccount.com"
+        service_account: "${{ inputs.service_account_name }}@${{ inputs.project_id }}.iam.gserviceaccount.com"
         token_format: access_token
         create_credentials_file: false
     - name: Log in to GAR
