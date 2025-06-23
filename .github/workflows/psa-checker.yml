@@ -67,5 +67,5 @@ jobs:
           ls "dev/$CHART_NAME/templates/"
           for ENV_DIR in */; do
             shopt -s extglob
-            cat "$ENV_DIR$CHART_NAME/templates/*.yaml" | docker run -a stdin -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level $PSS_LEVEL -f -
+            cat $ENV_DIR$CHART_NAME/templates/*.yaml | docker run -a stdin -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level $PSS_LEVEL -f -
           done
