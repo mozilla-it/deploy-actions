@@ -60,6 +60,7 @@ jobs:
           PSS_LEVEL: ${{ inputs.pss_level }}
         run: |
           # Loop over each `values-*` dir and check PSS levels
+          find /path/ -type d -print
           cd "shared/charts/${{ matrix.chart }}/"
           docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA
           for ENV_DIR in */; do
