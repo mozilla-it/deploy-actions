@@ -69,5 +69,5 @@ jobs:
             shopt -s nullglob
             files=$(ls $ENV_DIR$CHART_NAME/templates/*.yaml)
             echo "Files: $files"
-            cat $files | docker run -a stdin -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level $PSS_LEVEL -f -
+            cat "$files" | docker run -a stdin -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level $PSS_LEVEL -f -
           done
