@@ -64,5 +64,5 @@ jobs:
           find . -type d -print
           docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA
           for ENV_DIR in */; do
-            cat "$ENV_DIR/**/*.yaml" | docker run -a stdin -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level $PSS_LEVEL -f -
+            cat "$ENV_DIR/*/templates/*.yaml" | docker run -a stdin -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level $PSS_LEVEL -f -
           done
