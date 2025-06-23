@@ -63,8 +63,6 @@ jobs:
           echo "Chart is ${{ matrix.chart }}"
           CHART_NAME=$(echo "${{ matrix.chart}}" | cut -d'/' -f1)
           cd "shared/charts/${{ matrix.chart }}/"
-          find . -type d -print
-          ls "dev/$CHART_NAME/templates/"
           for ENV_DIR in */; do
-            cat $ENV_DIR$CHART_NAME/templates/*.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level restricted -f -
+            cat "$ENV_DIR$CHART_NAME/templates/*.yaml" | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
           done
