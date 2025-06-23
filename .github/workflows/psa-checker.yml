@@ -64,6 +64,5 @@ jobs:
           CHART_NAME=$(echo "${{ matrix.chart}}" | cut -d'/' -f1)
           cd "shared/charts/${{ matrix.chart }}/"
           for ENV_DIR in */; do
-            shopt -s extglob
-            cat "$ENV_DIR$CHART_NAME/templates/*.yaml" | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
+            cat $ENV_DIR$CHART_NAME/templates/*.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
           done
