@@ -2,16 +2,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# Reusable workflow to render helm charts and check if they meet PSS level restricted
+# Reusable workflow to check if helm charts meet PSS level restricted
 # Must run with `needs: run_validate_k8s_manifests`, as this uses the charts rendered by that job
 
-name: render helm charts and check pod security level
+name: check pod security level of helm charts
 on:
   workflow_call:
     inputs:
       pss_level:
         description: 'PSS level to check against'
-        default: 'restricted'
+        default: 'restricted' # Can be privileged, baseline, or restricted
         required: false
         type: string
 env:
@@ -30,8 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
          fetch-depth: '100'
-         persist-credentials: true # We are using these credentials in later steps
-
+         persist-credentials: true # We are using these credentials in the next step
       - name: find changed helm charts
         id: find_changed_charts
         run: |
@@ -62,6 +61,7 @@ jobs:
           CHART_DIR: ${{ matrix.chart }}
         run: |
           # Loop over each `values-*` dir and check PSS levels
+          docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
           CHART_NAME=$(echo "$CHART_DIR" | cut -d'/' -f1)
           cd "shared/charts/$CHART_DIR/"
           for ENV_DIR in */; do
