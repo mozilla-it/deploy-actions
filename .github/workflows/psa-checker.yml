@@ -58,11 +58,12 @@ jobs:
         id: psa_check
         env:
           PSS_LEVEL: ${{ inputs.pss_level }}
+          CHART_DIR: ${{ matrix.chart }}
         run: |
           # Loop over each `values-*` dir and check PSS levels
-          echo "Chart dir is ${{ matrix.chart }}"
-          CHART_NAME=$(echo "${{ matrix.chart}}" | cut -d'/' -f1)
-          cd "shared/charts/${{ matrix.chart }}/"
+          echo "Chart dir is $CHART_DIR"
+          CHART_NAME=$(echo "$CHART_DIR" | cut -d'/' -f1)
+          cd "shared/charts/$CHART_DIR/"
           for ENV_DIR in */; do
             cat $ENV_DIR$CHART_NAME/templates/*.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
           done
