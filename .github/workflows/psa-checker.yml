@@ -65,6 +65,6 @@ jobs:
           CHART_NAME=$(echo "$CHART_DIR" | cut -d'/' -f1)
           cd "shared/charts/$CHART_DIR/"
           for ENV_DIR in */; do
-            echo "Checking $ENV_DIR for chart: $CHART_NAME"
+            echo -e "\nChecking $ENV_DIR for chart: $CHART_NAME"
             cat $ENV_DIR$CHART_NAME/templates/*.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
           done
