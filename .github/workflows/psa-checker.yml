@@ -2,8 +2,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# Reusable workflow to check if helm charts meet PSS level restricted
+###
+# Reusable workflow to check if helm charts meet pod security level restricted
 # Must run with `needs: run_validate_k8s_manifests`, as this uses the charts rendered by that job
+###
+# See https://github.com/mozilla/psa-checker for details on psa-checker
 
 name: check pod security level of helm charts
 on:
