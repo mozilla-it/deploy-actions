@@ -1,0 +1,73 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+###
+# Reusable workflow to check if helm charts meet pod security level restricted
+# Must run with `needs: run_validate_k8s_manifests`, as this uses the charts rendered by that job
+###
+# See https://github.com/mozilla/psa-checker for details on psa-checker
+
+name: check pod security level of helm charts
+on:
+  workflow_call:
+    inputs:
+      pss_level:
+        description: 'PSS level to check against'
+        default: 'restricted' # Can be privileged, baseline, or restricted
+        required: false
+        type: string
+env:
+  HEAD_REF: ${{ github.head_ref }}
+  PSA_CHECKER_IMAGE: 'us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/psa-checker'
+  PSA_CHECKER_SHA: '567481c4bf3d981cef05a4fe021e5dfa0caa8378'
+
+jobs:
+  get_changed_helm_charts:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix_charts: ${{ steps.find_changed_charts.outputs.matrix_changed_charts }}
+      charts: ${{ steps.find_changed_charts.outputs.changed_charts }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+         fetch-depth: '100'
+         persist-credentials: true # We are using these credentials in the next step
+      - name: find changed helm charts
+        id: find_changed_charts
+        run: |
+          git fetch origin $GITHUB_BASE_REF:$GITHUB_BASE_REF
+          echo matrix_changed_charts=$(git diff --name-only $GITHUB_BASE_REF...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq | jq -R 'split("\n")' | jq -s 'flatten(1)') >> $GITHUB_OUTPUT
+          echo changed_charts=$(git diff --name-only $GITHUB_BASE_REF...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq) >> $GITHUB_OUTPUT
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+
+  check_pod_security_level:
+    runs-on: ubuntu-latest
+    needs: get_changed_helm_charts
+    strategy:
+      matrix:
+        chart: ${{ fromJSON(needs.get_changed_helm_charts.outputs.matrix_charts) }}
+    steps:
+        # Download charts already rendered by validate action
+      - name: download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "k8s-manifests-*"
+          merge-multiple: true
+          path: "shared"
+      - name: run psa-checker
+        id: psa_check
+        env:
+          PSS_LEVEL: ${{ inputs.pss_level }}
+          CHART_DIR: ${{ matrix.chart }}
+        run: |
+          # Loop over each `values-*` dir and check PSS levels
+          docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
+          CHART_NAME=$(echo "$CHART_DIR" | cut -d'/' -f1)
+          cd "shared/charts/$CHART_DIR/"
+          for ENV_DIR in */; do
+            echo -e "\nChecking $ENV_DIR for chart: $CHART_NAME"
+            cat $ENV_DIR$CHART_NAME/templates/*.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
+          done
