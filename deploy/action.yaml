@@ -79,6 +79,7 @@ runs:
         repository: ${{ inputs.infra_repo }}
         ref: ${{ inputs.infra_repo_ref }}
         ssh-key: ${{ inputs.infra_repo_ssh_key }}
+        persist-credentials: false
 
     - id: deployment_service_account
       name: deployment service account
