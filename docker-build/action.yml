@@ -6,7 +6,7 @@ inputs:
     required: true
   gar_location:
     description: GCP region where GAR is located
-    required: true
+    required: false
     default: us
   gar_name:
     description: GAR Name
@@ -16,7 +16,7 @@ inputs:
     required: true
   image_build_context:
     description: Path to image context for `docker build`
-    required: true
+    required: false
     default: ./
   image_tag_metadata:
     description: Optional metadata to append to image tag (e.g. for a tagged commit `v1.2.3` and metadata `dev`, the final image tag will be `v1.2.3--dev`)
@@ -28,7 +28,7 @@ inputs:
   should_tag_latest:
     description: Whether to tag images as `latest`.
     required: false
-    default: "false"    
+    default: "false"
 
 outputs:
   image_tags:
