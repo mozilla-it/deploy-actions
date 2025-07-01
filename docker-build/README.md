@@ -1,27 +1,29 @@
 # docker-build
 
-Build a MozCloud service image
+This GitHub Action is designed to build a Docker container image, providing standard Mozcloud tags for supported registries. It outputs a list of images to be consumed by the [docker-push](../docker-push/README.md) action
 
 ## Inputs
 
 | Name                  | Required | Description                                                                                                                                                                               |
 | --------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `image_name`          | Yes      | Name to give to the built image                                                                                                                                                           |
-| `gar_location`        | Yes      | GCP region where GAR is located (default: `us`)                                                                                                                                           |
-| `gar_name`            | Yes      | Name of the GAR repository                                                                                                                                                                |
-| `project_id`          | Yes      | GCP project ID                                                                                                                                                                            |
-| `image_build_context` | Yes      | Path to the Docker build context (default: `./`)                                                                                                                                          |
-| `image_tag_metadata`  | No       | Metadata to append to the image tag.<br><br>For example, for a workflow triggred by a git tag `v1.2.3` and an `image_tag_metadata` value `dev`, the final image tag will be `v1.2.3--dev` |
+| `gar_name`            | Yes      | Name of the GAR repository (typically `<tenant name>-prod`)                                                                                                                               |
+| `project_id`          | Yes      | GCP project ID (typically `moz-fx-<tenant name>-prod`)                                                                                                                                    |
+| `image_build_context` | No       | Path to the Docker build context (default: `./`)                                                                                                                                          |
+| `gar_location`        | No       | GCP region where GAR is located (default: `us`)                                                                                                                                           |
 | `should_tag_ghcr`     | No       | Whether or not to generate image tags for Github Container Registry (default: `false`)                                                                                                    |
 | `should_tag_latest`   | No       | Whether or not to tag the image(s) as `latest` (default: `false`)                                                                                                                         |
+| `image_tag_metadata`  | No       | Metadata to append to the image tag.<br><br>For example, for a workflow triggred by a git tag `v1.2.3` and an `image_tag_metadata` value `dev`, the final image tag will be `v1.2.3--dev` |
 
 ## Outputs
 
-| Name         | Description                                  |
-| ------------ | -------------------------------------------- |
-| `image_tags` | The list of generated Docker images and tags |
+| Name         | Description                                             |
+| ------------ | ------------------------------------------------------- |
+| `image_tags` | A newline-delimited list of generated Docker image tags |
 
 ## Example
+
+### Usage
 
 ```yaml
 - uses: mozilla/deploy-actions/docker-build@v4
@@ -31,4 +33,15 @@ Build a MozCloud service image
     project_id: moz-fx-tenant-prod
     image_tag_metadata: dev
     should_tag_ghcr: true
+```
+
+### Outputs
+
+Assumes image was built in the repo `mozilla/my-repo`, triggered by pushing a tag `v1.0.0`
+
+#### `image_tags`
+
+```
+ghcr.io/mozilla/my-repo/my-service:v1.0.0--dev
+us-docker.pkg.dev/moz-fx-tenant-prod/tenant-prod/my-service:v1.0.0--dev
 ```
