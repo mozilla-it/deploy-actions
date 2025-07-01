@@ -3,7 +3,7 @@ description: Push a Docker image to GAR.
 
 inputs:
   image_tags:
-    description: Newline-delimited list of images to be pushed.
+    description: Newline-delimited list of images to be pushed. See README for more information.
     required: true
   workload_identity_pool_project_number:
     description: Project number of workload identity pool used for OIDC authentication.
