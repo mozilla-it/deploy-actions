@@ -25,13 +25,18 @@ This GitHub Action is designed to build a Docker container image, providing stan
 
 ### Usage
 
+This example demonstrates how to build a Docker container image for a service named `my-service`. The image is:
+
+- Tagged with metadata indicating the target deployment environment (e.g., `dev`, `stage`, `prod`).
+- Tagged so that it can be published to both Google Artifact Registry and GitHub Container Registry.
+
 ```yaml
 - uses: mozilla/deploy-actions/docker-build@v4
   with:
     image_name: my-service
     gar_name: tenant-prod
     project_id: moz-fx-tenant-prod
-    image_tag_metadata: dev
+    image_tag_metadata: ${{ steps.preflight.outputs.deployment-env }} # resolves to `dev` for the purposes of this example
     should_tag_ghcr: true
 ```
 
