@@ -1,0 +1,124 @@
+name: Docker Build and Push
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      gar_name:
+        required: true
+        type: string
+      project_id:
+        required: true
+        type: string
+      workload_identity_pool_project_number:
+        required: true
+        type: string
+      preflight_script:
+        type: string
+        required: false
+        default: |
+          IMAGE_BUILD_CONTEXT_ABSPATH=$(realpath "$IMAGE_BUILD_CONTEXT")
+
+          printf '{"commit":"%s","version":"%s","source":"%s","build":"%s"}\n' \
+          "$GITHUB_SHA" \
+          "$GITHUB_REF_NAME" \
+          "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+          "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$IMAGE_BUILD_CONTEXT_ABSPATH/version.json"
+      verify_script:
+        type: string
+        required: false
+        default: ""
+      image_build_context:
+        required: false
+        type: string
+        default: "./"
+      image_tag_metadata:
+        required: false
+        type: string
+      should_tag_ghcr:
+        required: false
+        type: boolean
+        default: false
+      should_tag_latest:
+        required: false
+        type: boolean
+        default: false
+      gar_location:
+        required: false
+        type: string
+        default: "us"
+      service_account_name:
+        required: false
+        type: string
+        default: "artifact-writer"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-tags: true
+      - name: Preflight
+        shell: bash
+        env:
+          IMAGE_BUILD_CONTEXT: ${{ inputs.image_build_context }}
+          PREFLIGHT_SCRIPT: ${{ inputs.preflight_script }}
+        if: ${{ inputs.preflight_script != '' }}
+        run: |
+          set -euo pipefail
+          TMP="$RUNNER_TEMP/preflight.sh"
+
+          if [[ -f "$PREFLIGHT_SCRIPT" ]]; then
+            bash "$PREFLIGHT_SCRIPT"
+          else
+            printf '%s\n' "$PREFLIGHT_SCRIPT" > "$TMP"
+            chmod +x "$TMP"
+            bash "$TMP"
+          fi
+      - name: Build and Tag Container Image
+        id: build
+        uses: mozilla/deploy-actions/docker-build@f6e53875d3aff6c2dc4d3499643004376abe0a8a
+        with:
+          image_name: ${{ inputs.image_name }}
+          gar_name: ${{ inputs.gar_name }}
+          project_id: ${{ inputs.project_id }}
+          image_build_context: ${{ inputs.image_build_context }}
+          image_tag_metadata: ${{ inputs.image_tag_metadata }}
+          should_tag_ghcr: ${{ inputs.should_tag_ghcr }}
+          should_tag_latest: ${{ inputs.should_tag_latest }}
+          gar_location: ${{ inputs.gar_location }}
+      - name: Verify Container Image
+        shell: bash
+        if: ${{ inputs.verify_script != '' }}
+        env:
+          VERIFY_SCRIPT: ${{ inputs.verify_script }}
+        run: |
+          set -euo pipefail
+          TMP="$RUNNER_TEMP/verify.sh"
+
+          if [[ -f "$VERIFY_SCRIPT" ]]; then
+            bash "$VERIFY_SCRIPT"
+          else
+            printf '%s\n' "$VERIFY_SCRIPT" > "$TMP"
+            chmod +x "$TMP"
+            bash "$TMP"
+          fi
+      - name: Push Container Image
+        uses: mozilla-it/deploy-actions/docker-push@f6e53875d3aff6c2dc4d3499643004376abe0a8a
+        with:
+          image_tags: ${{ steps.build.outputs.image_tags }}
+          should_authenticate_to_ghcr: ${{ inputs.should_tag_ghcr }}
+          project_id: ${{ inputs.project_id }}
+          gar_location: ${{ inputs.gar_location }}
+          workload_identity_pool_project_number: ${{ inputs.workload_identity_pool_project_number }}
+          service_account_name: ${{ inputs.service_account_name }}
