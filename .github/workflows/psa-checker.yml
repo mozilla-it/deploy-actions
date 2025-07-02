@@ -65,7 +65,7 @@ jobs:
         run: |
           # Loop over each `values-*` dir and check PSS levels
           docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
-          CHART_NAME=$(echo "$CHART_DIR" | cut -d'/' -f1)
+          CHART_NAME=$(echo "$CHART_DIR" | cut -d'/' -f3)
           cd "shared/charts/$CHART_DIR/"
           for ENV_DIR in */; do
             echo -e "\nChecking $ENV_DIR for chart: $CHART_NAME"
