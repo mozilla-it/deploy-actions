@@ -83,7 +83,7 @@ jobs:
           ref: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.sha) || github.ref }}
           persist-credentials: false
           fetch-tags: true
-      - name: Preflight
+      - name: Run pre-build commands
         shell: bash
         env:
           IMAGE_BUILD_CONTEXT: ${{ inputs.image_build_context }}
@@ -113,7 +113,7 @@ jobs:
           should_tag_ghcr: ${{ inputs.should_tag_ghcr }}
           should_tag_latest: ${{ inputs.should_tag_latest }}
           gar_location: ${{ inputs.gar_location }}
-      - name: Verify Container Image
+      - name: Run post-build commands
         shell: bash
         if: ${{ inputs.postbuild_script != '' }}
         env:
