@@ -1,8 +1,8 @@
-# This reusable workflow encapsulates an end to end workflow for building and
+# This reusable workflow encapsulates an end to end workflow for building and 
 # pushing a container image for a MozCloud Service. It:
-#   - runs a "preflight" script to do things like create a `version.json` file
+#   - runs a `prebuild_script` to prepare the build environment, e.g. create a `version.json` file in the build context
 #   - builds the image
-#   - provides an entrypoint to run verification steps on the image (e.g. load tests)
+#   - provides an entrypoint to run a `postbuild_script`, e.g. run a suite of tests
 #   - pushes the image
 #
 # For details on the workflow inputs passed to docker-build and docker-push, see the 
@@ -29,7 +29,7 @@ on:
         required: false
         default: ${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}
         type: string
-      preflight_script:
+      prebuild_script:
         type: string
         required: false
         default: |
@@ -40,7 +40,7 @@ on:
           "$GITHUB_REF_NAME" \
           "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
           "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$IMAGE_BUILD_CONTEXT_ABSPATH/version.json"
-      verify_script:
+      postbuild_script:
         type: string
         required: false
         default: ""
@@ -87,17 +87,17 @@ jobs:
         shell: bash
         env:
           IMAGE_BUILD_CONTEXT: ${{ inputs.image_build_context }}
-          PREFLIGHT_SCRIPT: ${{ inputs.preflight_script }}
-        if: ${{ inputs.preflight_script != '' }}
+          PREBUILD_SCRIPT: ${{ inputs.prebuild_script }}
+        if: ${{ inputs.prebuild_script != '' }}
         run: |
           set -euo pipefail
-          TMP="$RUNNER_TEMP/preflight.sh"
+          TMP="$RUNNER_TEMP/prebuild.sh"
 
-          if [[ -f "$PREFLIGHT_SCRIPT" ]]; then
-            chmod +x "$PREFLIGHT_SCRIPT"
-            bash "$PREFLIGHT_SCRIPT"
+          if [[ -f "$PREBUILD_SCRIPT" ]]; then
+            chmod +x "$PREBUILD_SCRIPT"
+            bash "$PREBUILD_SCRIPT"
           else
-            printf '%s\n' "$PREFLIGHT_SCRIPT" > "$TMP"
+            printf '%s\n' "$PREBUILD_SCRIPT" > "$TMP"
             chmod +x "$TMP"
             bash "$TMP"
           fi
@@ -115,18 +115,18 @@ jobs:
           gar_location: ${{ inputs.gar_location }}
       - name: Verify Container Image
         shell: bash
-        if: ${{ inputs.verify_script != '' }}
+        if: ${{ inputs.postbuild_script != '' }}
         env:
-          VERIFY_SCRIPT: ${{ inputs.verify_script }}
+          POSTBUILD_SCRIPT: ${{ inputs.postbuild_script }}
         run: |
           set -euo pipefail
-          TMP="$RUNNER_TEMP/verify.sh"
+          TMP="$RUNNER_TEMP/postbuild.sh"
 
-          if [[ -f "$VERIFY_SCRIPT" ]]; then
-            chmod +x "$VERIFY_SCRIPT"
-            bash "$VERIFY_SCRIPT"
+          if [[ -f "$POSTBUILD_SCRIPT" ]]; then
+            chmod +x "$POSTBUILD_SCRIPT"
+            bash "$POSTBUILD_SCRIPT"
           else
-            printf '%s\n' "$VERIFY_SCRIPT" > "$TMP"
+            printf '%s\n' "$POSTBUILD_SCRIPT" > "$TMP"
             chmod +x "$TMP"
             bash "$TMP"
           fi
