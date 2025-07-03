@@ -1,0 +1,141 @@
+# This reusable workflow encapsulates an end to end workflow for building and 
+# pushing a container image for a MozCloud Service. It:
+#   - runs a `prebuild_script` to prepare the build environment, e.g. create a `version.json` file in the build context
+#   - builds the image
+#   - provides an entrypoint to run a `postbuild_script`, e.g. run a suite of tests
+#   - pushes the image
+#
+# For details on the workflow inputs passed to docker-build and docker-push, see the 
+# documentation for those actions:
+#  
+# https://github.com/mozilla-it/deploy-actions/tree/main/docker-build
+# https://github.com/mozilla-it/deploy-actions/tree/main/docker-push
+
+name: Docker Build and Push
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      gar_name:
+        required: true
+        type: string
+      project_id:
+        required: true
+        type: string
+      workload_identity_pool_project_number:
+        required: false
+        default: ${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}
+        type: string
+      prebuild_script:
+        type: string
+        required: false
+        default: |
+          IMAGE_BUILD_CONTEXT_ABSPATH=$(realpath "$IMAGE_BUILD_CONTEXT")
+
+          printf '{"commit":"%s","version":"%s","source":"%s","build":"%s"}\n' \
+          "$GITHUB_SHA" \
+          "$GITHUB_REF_NAME" \
+          "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+          "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$IMAGE_BUILD_CONTEXT_ABSPATH/version.json"
+      postbuild_script:
+        type: string
+        required: false
+        default: ""
+      image_build_context:
+        required: false
+        type: string
+        default: "./"
+      image_tag_metadata:
+        required: false
+        type: string
+      should_tag_ghcr:
+        required: false
+        type: boolean
+        default: false
+      should_tag_latest:
+        required: false
+        type: boolean
+        default: false
+      gar_location:
+        required: false
+        type: string
+        default: "us"
+      service_account_name:
+        required: false
+        type: string
+        default: "artifact-writer"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.sha) || github.ref }}
+          persist-credentials: false
+          fetch-tags: true
+      - name: Run pre-build commands
+        shell: bash
+        env:
+          IMAGE_BUILD_CONTEXT: ${{ inputs.image_build_context }}
+          PREBUILD_SCRIPT: ${{ inputs.prebuild_script }}
+        if: ${{ inputs.prebuild_script != '' }}
+        run: |
+          set -euo pipefail
+          TMP="$RUNNER_TEMP/prebuild.sh"
+
+          if [[ -f "$PREBUILD_SCRIPT" ]]; then
+            chmod +x "$PREBUILD_SCRIPT"
+            bash "$PREBUILD_SCRIPT"
+          else
+            printf '%s\n' "$PREBUILD_SCRIPT" > "$TMP"
+            chmod +x "$TMP"
+            bash "$TMP"
+          fi
+      - name: Build and Tag Container Image
+        id: build
+        uses: mozilla/deploy-actions/docker-build@f6e53875d3aff6c2dc4d3499643004376abe0a8a
+        with:
+          image_name: ${{ inputs.image_name }}
+          gar_name: ${{ inputs.gar_name }}
+          project_id: ${{ inputs.project_id }}
+          image_build_context: ${{ inputs.image_build_context }}
+          image_tag_metadata: ${{ inputs.image_tag_metadata }}
+          should_tag_ghcr: ${{ inputs.should_tag_ghcr }}
+          should_tag_latest: ${{ inputs.should_tag_latest }}
+          gar_location: ${{ inputs.gar_location }}
+      - name: Run post-build commands
+        shell: bash
+        if: ${{ inputs.postbuild_script != '' }}
+        env:
+          POSTBUILD_SCRIPT: ${{ inputs.postbuild_script }}
+        run: |
+          set -euo pipefail
+          TMP="$RUNNER_TEMP/postbuild.sh"
+
+          if [[ -f "$POSTBUILD_SCRIPT" ]]; then
+            chmod +x "$POSTBUILD_SCRIPT"
+            bash "$POSTBUILD_SCRIPT"
+          else
+            printf '%s\n' "$POSTBUILD_SCRIPT" > "$TMP"
+            chmod +x "$TMP"
+            bash "$TMP"
+          fi
+      - name: Push Container Image
+        uses: mozilla-it/deploy-actions/docker-push@f6e53875d3aff6c2dc4d3499643004376abe0a8a
+        with:
+          image_tags: ${{ steps.build.outputs.image_tags }}
+          should_authenticate_to_ghcr: ${{ inputs.should_tag_ghcr }}
+          project_id: ${{ inputs.project_id }}
+          gar_location: ${{ inputs.gar_location }}
+          workload_identity_pool_project_number: ${{ inputs.workload_identity_pool_project_number }}
+          service_account_name: ${{ inputs.service_account_name }}
