@@ -80,7 +80,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
+          ref: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.sha) || github.ref }}
           persist-credentials: false
           fetch-tags: true
       - name: Preflight
