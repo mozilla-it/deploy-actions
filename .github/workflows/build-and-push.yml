@@ -26,7 +26,8 @@ on:
         required: true
         type: string
       workload_identity_pool_project_number:
-        required: true
+        required: false
+        default: ${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}
         type: string
       preflight_script:
         type: string
