@@ -93,6 +93,7 @@ jobs:
           TMP="$RUNNER_TEMP/preflight.sh"
 
           if [[ -f "$PREFLIGHT_SCRIPT" ]]; then
+            chmod +x "$PREFLIGHT_SCRIPT"
             bash "$PREFLIGHT_SCRIPT"
           else
             printf '%s\n' "$PREFLIGHT_SCRIPT" > "$TMP"
@@ -121,6 +122,7 @@ jobs:
           TMP="$RUNNER_TEMP/verify.sh"
 
           if [[ -f "$VERIFY_SCRIPT" ]]; then
+            chmod +x "$VERIFY_SCRIPT"
             bash "$VERIFY_SCRIPT"
           else
             printf '%s\n' "$VERIFY_SCRIPT" > "$TMP"
