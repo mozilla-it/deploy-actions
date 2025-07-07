@@ -131,7 +131,7 @@ jobs:
             bash "$TMP"
           fi
       - name: Push Container Image
-        uses: mozilla-it/deploy-actions/docker-push@f6e53875d3aff6c2dc4d3499643004376abe0a8a
+        uses: mozilla-it/deploy-actions/docker-push@3abb96858bb4e16d05c61c8a9bebb65219fd7f17
         with:
           image_tags: ${{ steps.build.outputs.image_tags }}
           should_authenticate_to_ghcr: ${{ inputs.should_tag_ghcr }}
