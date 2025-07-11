@@ -1,0 +1,39 @@
+<!-- This document is automatically generated. Do not edit by hand! -->
+# {{ name }}
+
+{{ description | wordwrap(100, break_on_hyphens=False) }}
+
+{% if inputs %}
+## Inputs
+
+| Name | Description | Required | Default |
+|------|-------------|----------|---------|
+{% for key, input in inputs.items() -%}
+| `{{ key }}` | {{ input.description }} | {{ input.required | default('False') }} | {{ "`" ~ input.default ~ "`" if
+input.default is defined else '' }}|
+{% endfor %}
+{% endif %}
+{% if outputs %}
+## Outputs
+
+| Name | Description |
+|------|-------------|
+{% for key, output in outputs.items() -%}
+| `{{ key }}` | {{ output.description }} |
+{% endfor %}
+{% endif %}
+## Example Usage
+### Minimal Configuration
+{{ minimal_usage_example }}
+
+### Minimal Configuration with Defaults
+{{ defaults_usage_example }}
+
+{% if custom_usage_examples %}
+### Custom Usage Examples
+Note that these examples are maintained by hand, unlike the examples above that are automatically
+generated, and as a result may drift out of date. Always consult the input and output sections for
+an up to date usage spec.
+
+{{ custom_usage_examples }}
+{% endif %}
