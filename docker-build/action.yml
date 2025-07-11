@@ -1,38 +1,46 @@
 name: docker-build
-description: Build a Mozcloud service image
+description: >-
+  Build a Docker container image, providing standard MozCloud tags for supported registries.
+  Outputs a newline-delimited list of images in `image_tags` to be consumed by the 
+  [docker-push](../docker-push/README.md) action.
 inputs:
   image_name:
     description: Name to give to the built image
+    example: my-service
     required: true
+  gar_name:
+    description: Name of the GAR repository
+    example: tenant-prod
+    required: true
+  project_id:
+    description: GCP project ID
+    example: moz-fx-tenant-prod
+    required: true
+  image_build_context:
+    description: Path to the Docker build context
+    required: false
+    default: "./"
   gar_location:
     description: GCP region where GAR is located
     required: false
-    default: us
-  gar_name:
-    description: GAR Name
-    required: true
-  project_id:
-    description: GCP project id
-    required: true
-  image_build_context:
-    description: Path to image context for `docker build`
-    required: false
-    default: ./
-  image_tag_metadata:
-    description: Optional metadata to append to image tag (e.g. for a tagged commit `v1.2.3` and metadata `dev`, the final image tag will be `v1.2.3--dev`)
-    required: false
+    default: "us"
   should_tag_ghcr:
-    description: Whether to tag images to be pushed to ghcr.io.
+    description: Whether or not to generate image tags for GitHub Container Registry
     required: false
     default: "false"
   should_tag_latest:
-    description: Whether to tag images as `latest`.
+    description: Whether or not to tag the image(s) as `latest`
     required: false
     default: "false"
-
+  image_tag_metadata:
+    description: >-
+      Metadata to append to the image tag. For example, for a workflow triggered
+      by a git tag `v1.2.3` and an `image_tag_metadata` value `dev`, the final 
+      image tag will be `v1.2.3--dev`.
+    required: false
 outputs:
   image_tags:
-    description: "Generated Docker image tags"
+    description: A newline-delimited list of generated Docker image tags
     value: ${{ steps.meta.outputs.tags }}
 
 runs:
@@ -58,7 +66,6 @@ runs:
         fi
         echo "Setting IMAGE_TAG=${tag} as output"
         echo "image_tag=${tag}" >> "$GITHUB_OUTPUT"
-
     - name: Set image list
       shell: bash
       id: set-images
@@ -83,7 +90,6 @@ runs:
           printf '%s\n' "${images[@]}"
           echo "EOF"
         } >> "$GITHUB_OUTPUT"
-
     - name: Set tag list
       shell: bash
       id: set-tags
@@ -105,7 +111,6 @@ runs:
           printf '%s\n' "${tags[@]}"
           echo "EOF"
         } >> "$GITHUB_OUTPUT"
-
     - name: Docker meta
       id: meta
       uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 #v5.7.0
