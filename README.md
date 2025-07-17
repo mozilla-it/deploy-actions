@@ -6,6 +6,9 @@ This repository contains GitHub Actions Composite Actions used for Deployment Au
 * [`docker-build`](./docker-build/README.md)
 * [`docker-push`](./docker-push//README.md)
 
+## Workflows
+* [build-and-publish](./reusable-workflow-docs/build-and-push.md)
+
 
 ## Releases & Tags
 
