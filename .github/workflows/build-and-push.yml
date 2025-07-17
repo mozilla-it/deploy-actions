@@ -1,15 +1,4 @@
-# This reusable workflow encapsulates an end to end workflow for building and 
-# pushing a container image for a MozCloud Service. It:
-#   - runs a `prebuild_script` to prepare the build environment, e.g. create a `version.json` file in the build context
-#   - builds the image
-#   - provides an entrypoint to run a `postbuild_script`, e.g. run a suite of tests
-#   - pushes the image
-#
-# For details on the workflow inputs passed to docker-build and docker-push, see the 
-# documentation for those actions:
-#  
-# https://github.com/mozilla-it/deploy-actions/tree/main/docker-build
-# https://github.com/mozilla-it/deploy-actions/tree/main/docker-push
+# See `reusable-workflow-docs/build-and-push.md` for usage details
 
 name: Docker Build and Push
 
