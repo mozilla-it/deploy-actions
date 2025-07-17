@@ -58,9 +58,30 @@ jobs:
           if [ -f "${MATRIX_CHART}/Chart.yaml" ]; then
             helm dependency update "${MATRIX_CHART}"
             values_files="${MATRIX_CHART}"/values-*
-            for values_file in $(basename -a $values_files); do
-              helm template "${MATRIX_CHART}" -f "${MATRIX_CHART}/values.yaml" -f "${MATRIX_CHART}/${values_file}" --output-dir "shared/head-charts/${MATRIX_CHART}/${values_file}"
-            done
+            for values_path in ${values_files}; do
+              values_file=$(basename "$values_path")
+              env=$(echo "$values_file" | sed -E 's/^values-([a-z0-9]+)(-.+)?\.yaml$/\1/')
+              region=$(echo "$values_file" | sed -nE "s/^values-${env}-(.+)\.yaml$/\1/p")
+
+              output_name=$(basename "$values_file" .yaml)
+              render_path="shared/head-charts/${MATRIX_CHART}/${output_name}"
+              mkdir -p "$render_path"
+
+              if [[ -n "$region" && -f "${MATRIX_CHART}/values-${env}.yaml" ]]; then
+                # Render with three layers: base, env, env-region
+                helm template "${MATRIX_CHART}" \
+                  -f "${MATRIX_CHART}/values.yaml" \
+                  -f "${MATRIX_CHART}/values-${env}.yaml" \
+                  -f "${MATRIX_CHART}/${values_file}" \
+                  --output-dir "$render_path"
+              else
+                # Only base + environment file
+                helm template "${MATRIX_CHART}" \
+                  -f "${MATRIX_CHART}/values.yaml" \
+                  -f "${MATRIX_CHART}/${values_file}" \
+                  --output-dir "$render_path"
+              fi
+           done
           fi
           echo sanitized_name=$(echo "${MATRIX_CHART}" | sed 's/\//-/g') >> $GITHUB_OUTPUT
         env:
@@ -95,9 +116,31 @@ jobs:
           if [ -f "${MATRIX_CHART}/Chart.yaml" ]; then
             helm dependency update "${MATRIX_CHART}"
             values_files="${MATRIX_CHART}"/values-*
-            for values_file in $(basename -a $values_files); do
-              helm template "${MATRIX_CHART}" -f "${MATRIX_CHART}/values.yaml" -f "${MATRIX_CHART}/${values_file}" --output-dir "shared/base-charts/${MATRIX_CHART}/${values_file}"
-            done
+
+            for values_path in ${values_files}; do
+              values_file=$(basename "$values_path")
+              env=$(echo "$values_file" | sed -E 's/^values-([a-z0-9]+)(-.+)?\.yaml$/\1/')
+              region=$(echo "$values_file" | sed -nE "s/^values-${env}-(.+)\.yaml$/\1/p")
+
+              output_name=$(basename "$values_file" .yaml)
+              render_path="shared/base-charts/${MATRIX_CHART}/${output_name}"
+              mkdir -p "$render_path"
+
+              if [[ -n "$region" && -f "${MATRIX_CHART}/values-${env}.yaml" ]]; then
+                # Render with three layers: base, env, env-region
+                helm template "${MATRIX_CHART}" \
+                  -f "${MATRIX_CHART}/values.yaml" \
+                  -f "${MATRIX_CHART}/values-${env}.yaml" \
+                  -f "${MATRIX_CHART}/${values_file}" \
+                  --output-dir "$render_path"
+              else
+                # Only base + environment file
+                helm template "${MATRIX_CHART}" \
+                  -f "${MATRIX_CHART}/values.yaml" \
+                  -f "${MATRIX_CHART}/${values_file}" \
+                  --output-dir "$render_path"
+              fi
+           done
           fi
           echo sanitized_name=$(echo "${MATRIX_CHART}" | sed 's/\//-/g') >> $GITHUB_OUTPUT
         env:
