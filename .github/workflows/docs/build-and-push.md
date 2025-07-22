@@ -70,7 +70,7 @@ jobs:
     permissions:
      contents: read
      id-token: write 
-    uses: mozilla-it/deploy-actions/.github/workflows/docker-build-and-push.yml@main
+    uses: mozilla-it/deploy-actions/.github/workflows/build-and-push.yml@main
     with:
      image_name: your-service
      gar_name: your-tenant-prod
@@ -94,7 +94,7 @@ jobs:
      contents: read
      id-token: write 
      packages: write
-   uses: mozilla-it/deploy-actions/.github/workflows/docker-build-and-push.yml@main
+   uses: mozilla-it/deploy-actions/.github/workflows/build-and-push.yml@main
    with:
      image_name: your-service
      gar_name: your-tenant-prod
