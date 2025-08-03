@@ -101,3 +101,10 @@ jobs:
       project_id: moz-fx-you-tenant-prod
       should_tag_ghcr: true
 ```
+
+## Troubleshooting
+
+Is your build failing? The "[How to: Publish Container Images to GAR][how-to]"
+wiki page may include some answers, specifically around permissions issues.
+
+[how-to]: https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/997163545/How+to+Publish+Container+Images+to+GAR
