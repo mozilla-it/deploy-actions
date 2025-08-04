@@ -9,9 +9,6 @@ name: render and diff helm charts
 on:
   workflow_call:
 
-env:
-  HEAD_REF: ${{ github.head_ref }}
-
 jobs:
   get_changed_helm_charts:
     runs-on: ubuntu-latest
@@ -34,37 +31,42 @@ jobs:
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
 
-  render_head_ref_charts:
+  render_charts:
     runs-on: ubuntu-latest
     needs: get_changed_helm_charts
     strategy:
       matrix:
         chart: ${{ fromJSON(needs.get_changed_helm_charts.outputs.matrix_charts) }}
+        ref: 
+          - name: base
+            sha: ${{ github.base_ref }}
+          - name: head
+            sha: ${{ github.head_ref }}
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
         with:
           persist-credentials: true # We are using these credentials in later steps
+          ref: ${{ matrix.ref.sha }}
 
       - name: setup helm
         uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
 
-      - name: render ${{ matrix.chart }} from head ref
-        id: render_head
+      - name: render ${{ matrix.chart }} from ${{ matrix.ref.name }} ref
+        id: render
         run: |
-          mkdir -p shared/head-charts
-          git fetch origin "${HEAD_REF}"
-          git checkout "${HEAD_REF}" --
+          mkdir -p shared/${MATRIX_REF_NAME}-charts
           if [ -f "${MATRIX_CHART}/Chart.yaml" ]; then
             helm dependency update "${MATRIX_CHART}"
             values_files="${MATRIX_CHART}"/values-*
+
             for values_path in ${values_files}; do
               values_file=$(basename "$values_path")
               env=$(echo "$values_file" | sed -E 's/^values-([a-z0-9]+)(-.+)?\.yaml$/\1/')
               region=$(echo "$values_file" | sed -nE "s/^values-${env}-(.+)\.yaml$/\1/p")
 
               output_name=$(basename "$values_file" .yaml)
-              render_path="shared/head-charts/${MATRIX_CHART}/${output_name}"
+              render_path="shared/${MATRIX_REF_NAME}-charts/${MATRIX_CHART}/${output_name}"
               mkdir -p "$render_path"
 
               if [[ -n "$region" && -f "${MATRIX_CHART}/values-${env}.yaml" ]]; then
@@ -86,79 +88,19 @@ jobs:
           echo sanitized_name=$(echo "${MATRIX_CHART}" | sed 's/\//-/g') >> $GITHUB_OUTPUT
         env:
           MATRIX_CHART: ${{ matrix.chart }}
-      - name: upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "shared-head-${{ steps.render_head.outputs.sanitized_name }}"
-          path: "shared"
-
-  render_base_ref_charts:
-    runs-on: ubuntu-latest
-    needs: get_changed_helm_charts
-    strategy:
-      matrix:
-        chart: ${{ fromJSON(needs.get_changed_helm_charts.outputs.matrix_charts) }}
-    steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: true # We are using these credentials in later steps
-
-      - name: setup helm
-        uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
-
-      - name: render ${{ matrix.chart }} from base ref
-        id: render_base
-        run: |
-          mkdir -p shared/base-charts
-          git fetch origin $GITHUB_BASE_REF
-          git checkout  $GITHUB_BASE_REF --
-          if [ -f "${MATRIX_CHART}/Chart.yaml" ]; then
-            helm dependency update "${MATRIX_CHART}"
-            values_files="${MATRIX_CHART}"/values-*
-
-            for values_path in ${values_files}; do
-              values_file=$(basename "$values_path")
-              env=$(echo "$values_file" | sed -E 's/^values-([a-z0-9]+)(-.+)?\.yaml$/\1/')
-              region=$(echo "$values_file" | sed -nE "s/^values-${env}-(.+)\.yaml$/\1/p")
-
-              output_name=$(basename "$values_file" .yaml)
-              render_path="shared/base-charts/${MATRIX_CHART}/${output_name}"
-              mkdir -p "$render_path"
-
-              if [[ -n "$region" && -f "${MATRIX_CHART}/values-${env}.yaml" ]]; then
-                # Render with three layers: base, env, env-region
-                helm template "${MATRIX_CHART}" \
-                  -f "${MATRIX_CHART}/values.yaml" \
-                  -f "${MATRIX_CHART}/values-${env}.yaml" \
-                  -f "${MATRIX_CHART}/${values_file}" \
-                  --output-dir "$render_path"
-              else
-                # Only base + environment file
-                helm template "${MATRIX_CHART}" \
-                  -f "${MATRIX_CHART}/values.yaml" \
-                  -f "${MATRIX_CHART}/${values_file}" \
-                  --output-dir "$render_path"
-              fi
-           done
-          fi
-          echo sanitized_name=$(echo "${MATRIX_CHART}" | sed 's/\//-/g') >> $GITHUB_OUTPUT
-        env:
-          MATRIX_CHART: ${{ matrix.chart }}
-          GITHUB_BASE_REF: "${{ github.base_ref }}"
+          MATRIX_REF_NAME: ${{ matrix.ref.name }}
 
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "shared-base-${{ steps.render_base.outputs.sanitized_name }}"
+          name: "shared-${{ matrix.ref.name }}-${{ steps.render.outputs.sanitized_name }}"
           path: "shared"
 
   diff_helm_charts:
     runs-on: ubuntu-latest
     needs:
       - get_changed_helm_charts
-      - render_base_ref_charts
-      - render_head_ref_charts
+      - render_charts
     steps:
       - name: setup helm
         uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
