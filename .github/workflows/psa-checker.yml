@@ -69,5 +69,7 @@ jobs:
           cd "shared/charts/$CHART_DIR/"
           for ENV_DIR in */; do
             echo -e "\nChecking $ENV_DIR for chart: $CHART_NAME"
-            cat $ENV_DIR$CHART_NAME/templates/*.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
+            cd "$(find $ENV_DIR -type d -name 'templates')"
+            cat *.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
+            cd - 
           done
