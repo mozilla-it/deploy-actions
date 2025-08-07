@@ -68,13 +68,13 @@ jobs:
   build-and-push:
     secrets: inherit
     permissions:
-     contents: read
-     id-token: write 
+      contents: read
+      id-token: write
     uses: mozilla-it/deploy-actions/.github/workflows/build-and-push.yml@main
     with:
-     image_name: your-service
-     gar_name: your-tenant-prod
-     project_id: moz-fx-you-tenant-prod
+      image_name: your-service
+      gar_name: your-tenant-prod
+      project_id: moz-fx-you-tenant-prod
 ```
 
 ### Push to GHCR
@@ -91,13 +91,20 @@ jobs:
   build:
     secrets: inherit
     permissions:
-     contents: read
-     id-token: write 
-     packages: write
-   uses: mozilla-it/deploy-actions/.github/workflows/build-and-push.yml@main
-   with:
-     image_name: your-service
-     gar_name: your-tenant-prod
-     project_id: moz-fx-you-tenant-prod
-     should_tag_ghcr: true
+      contents: read
+      id-token: write
+      packages: write
+    uses: mozilla-it/deploy-actions/.github/workflows/build-and-push.yml@main
+    with:
+      image_name: your-service
+      gar_name: your-tenant-prod
+      project_id: moz-fx-you-tenant-prod
+      should_tag_ghcr: true
 ```
+
+## Troubleshooting
+
+Is your build failing? The "[How to: Publish Container Images to GAR][how-to]"
+wiki page may include some answers, specifically around permissions issues.
+
+[how-to]: https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/997163545/How+to+Publish+Container+Images+to+GAR
