@@ -4,17 +4,17 @@ This GitHub Action is designed to build a Docker container image, providing stan
 
 ## Inputs
 
-| Name                  | Required | Description                                                                                                                                                                               |
-| --------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `image_name`          | Yes      | Name to give to the built image                                                                                                                                                           |
-| `gar_name`            | Yes      | Name of the GAR repository (typically `<tenant name>-prod`)                                                                                                                               |
-| `project_id`          | Yes      | GCP project ID (typically `moz-fx-<tenant name>-prod`)                                                                                                                                    |
-| `image_build_context` | No       | Path to the Docker build context (default: `./`)                                                                                                                                          |
-| `dockerfile_path`     | No       | Path to the Dockerfile used to build the image  (default: `./Dockerfile`)                                                                                                                 |
-| `gar_location`        | No       | GCP region where GAR is located (default: `us`)                                                                                                                                           |
-| `should_tag_ghcr`     | No       | Whether or not to generate image tags for Github Container Registry (default: `false`)                                                                                                    |
-| `should_tag_latest`   | No       | Whether or not to tag the image(s) as `latest` (default: `false`)                                                                                                                         |
-| `image_tag_metadata`  | No       | Metadata to append to the image tag.<br><br>For example, for a workflow triggred by a git tag `v1.2.3` and an `image_tag_metadata` value `dev`, the final image tag will be `v1.2.3--dev` |
+| Name                  | Required | Description                                                                                                                                                                                |
+| --------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `image_name`          | Yes      | Name to give to the built image                                                                                                                                                            |
+| `gar_name`            | Yes      | Name of the GAR repository (typically `<tenant name>-prod`)                                                                                                                                |
+| `project_id`          | Yes      | GCP project ID (typically `moz-fx-<tenant name>-prod`)                                                                                                                                     |
+| `image_build_context` | No       | Path to the Docker build context. Default value is a path relative to the repository root (default: `./`)                                                                                  |
+| `dockerfile_path`     | No       | Path to the Dockerfile used to build the image. Default value is a path relative to the repository root (default: `./Dockerfile`)                                                          |
+| `gar_location`        | No       | GCP region where GAR is located (default: `us`)                                                                                                                                            |
+| `should_tag_ghcr`     | No       | Whether or not to generate image tags for Github Container Registry (default: `false`)                                                                                                     |
+| `should_tag_latest`   | No       | Whether or not to tag the image(s) as `latest` (default: `false`)                                                                                                                          |
+| `image_tag_metadata`  | No       | Metadata to append to the image tag.<br><br>For example, for a workflow triggered by a git tag `v1.2.3` and an `image_tag_metadata` value `dev`, the final image tag will be `v1.2.3--dev` |
 
 ## Outputs
 
