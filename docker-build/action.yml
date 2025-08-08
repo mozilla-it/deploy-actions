@@ -18,6 +18,10 @@ inputs:
     description: Path to image context for `docker build`
     required: false
     default: ./
+  dockerfile_path:
+    description: Path to Dockerfile
+    required: false
+    default: ./Dockerfile
   image_tag_metadata:
     description: Optional metadata to append to image tag (e.g. for a tagged commit `v1.2.3` and metadata `dev`, the final image tag will be `v1.2.3--dev`)
     required: false
@@ -119,6 +123,7 @@ runs:
         # case. We'll have to rely on docker/build-push-action to handle
         # santizing this input
         context: ${{ inputs.image_build_context }} # zizmor: ignore[template-injection]
+        file: ${{ inputs.dockerfile_path }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
