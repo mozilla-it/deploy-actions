@@ -25,7 +25,8 @@ these inputs.
 | `workload_identity_pool_project_number` | false    | string  | GCP workload identity pool project number. (default: `${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}`) |
 | `prebuild_script`                       | false    | string  | Shell script (either inline or path to script) to run before building the image. (default: *see below)*         |
 | `postbuild_script`                      | false    | string  | Shell script (either inline or path to script) to run after building the image.                                 |
-| `image_build_context`                   | false    | string  | Build context path. (default: `"./"`)                                                                           |
+| `image_build_context`                   | false    | string  | Build context path. Default value is relative to the repository root. (default: `"./"`)                         |
+| `dockerfile_path`                       | false    | string  | Path to Dockerfile. Default value is relative to the repository root. (default: `"./Dockerfile"`)               |
 | `image_tag_metadata`                    | false    | string  | Additional metadata for image tagging.                                                                          |
 | `should_tag_ghcr`                       | false    | boolean | Whether to also tag and push the image to GHCR. (default: `false`)                                              |
 | `should_tag_latest`                     | false    | boolean | Whether to tag the image as `latest`. (default: `false`)                                                        |

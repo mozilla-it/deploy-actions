@@ -37,6 +37,10 @@ on:
         required: false
         type: string
         default: "./"
+      dockerfile_path:
+        required: false
+        type: string
+        default: "./Dockerfile"
       image_tag_metadata:
         required: false
         type: string
@@ -98,6 +102,7 @@ jobs:
           gar_name: ${{ inputs.gar_name }}
           project_id: ${{ inputs.project_id }}
           image_build_context: ${{ inputs.image_build_context }}
+          dockerfile_path: ${{ inputs.dockerfile_path }}
           image_tag_metadata: ${{ inputs.image_tag_metadata }}
           should_tag_ghcr: ${{ inputs.should_tag_ghcr }}
           should_tag_latest: ${{ inputs.should_tag_latest }}
