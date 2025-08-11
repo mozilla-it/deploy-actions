@@ -63,13 +63,15 @@ jobs:
           PSS_LEVEL: ${{ inputs.pss_level }}
           CHART_DIR: ${{ matrix.chart }}
         run: |
-          # Loop over each `values-*` dir and check PSS levels
+          # Loop over templates from each `values-*` dir and check PSS levels
           docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
-          CHART_NAME=$(echo "$CHART_DIR" | cut -d'/' -f3)
           cd "shared/charts/$CHART_DIR/"
           for ENV_DIR in */; do
-            echo -e "\nChecking $ENV_DIR for chart: $CHART_NAME"
-            cd "$(find $ENV_DIR -type d -name 'templates')"
-            cat *.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
-            cd - 
+            # If there are dependencies, loop over all of them
+            for CHART in $(find $ENV_DIR -type d -name 'templates'); do
+              echo -e "\nRunning psa-checker for chart: $CHART"
+              cd $CHART
+              cat *.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
+              cd -
+            done
           done
