@@ -69,7 +69,7 @@ jobs:
           for ENV_DIR in */; do
             # If there are dependencies, loop over all of them
             for CHART in $(find $ENV_DIR -type d -name 'templates'); do
-              echo -e "\nRunning psa-checker in $ENV_DIR for chart: $CHART"
+              echo -e "\nRunning psa-checker for chart: $CHART"
               cd $CHART
               cat *.yaml | docker run -i $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f -
               cd -
