@@ -23,7 +23,7 @@ This GitHub Action is designed to push Docker images to Google Artifact Registry
   uses: mozilla-it/deploy-actions/docker-push@v4
   with:
     # typically provided from another step's output
-    image_tags: |
+    image_tags: |-
       ghcr.io/mozilla/my-repo/my-service:v1.0.0
       us-docker.pkg.dev/moz-fx-tenant-prod/tenant-prod/my-service:v1.0.0
     should_authenticate_to_ghcr: true
