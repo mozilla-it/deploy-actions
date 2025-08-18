@@ -96,7 +96,7 @@ jobs:
           fi
       - name: Build and Tag Container Image
         id: build
-        uses: mozilla-it/deploy-actions/docker-build@6a12c3dac2fba1f9b66cd0ccbaafb5972093ddd9
+        uses: mozilla-it/deploy-actions/docker-build@e2876aeb0f458eba1a39fa46bd072264c5877b11
         with:
           image_name: ${{ inputs.image_name }}
           gar_name: ${{ inputs.gar_name }}
@@ -125,7 +125,7 @@ jobs:
             bash "$TMP"
           fi
       - name: Push Container Image
-        uses: mozilla-it/deploy-actions/docker-push@6a12c3dac2fba1f9b66cd0ccbaafb5972093ddd9
+        uses: mozilla-it/deploy-actions/docker-push@e2876aeb0f458eba1a39fa46bd072264c5877b11
         with:
           image_tags: ${{ steps.build.outputs.image_tags }}
           should_authenticate_to_ghcr: ${{ inputs.should_tag_ghcr }}
