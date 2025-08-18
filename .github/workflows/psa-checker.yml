@@ -30,7 +30,7 @@ jobs:
       charts: ${{ steps.find_changed_charts.outputs.changed_charts }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
          fetch-depth: '100'
          persist-credentials: true # We are using these credentials in the next step
