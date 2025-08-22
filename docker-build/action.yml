@@ -14,6 +14,11 @@ inputs:
   project_id:
     description: GCP project id
     required: true
+  docker_build_args:
+    default: ''
+    description: Optional list of build-time variables https://docs.docker.com/engine/reference/commandline/buildx_build/#build-arg
+    required: false
+    type: string
   image_build_context:
     description: Path to image context for `docker build`
     required: false
@@ -122,6 +127,7 @@ runs:
         # We can't use the intermediate env var trick to appease zizmor in this
         # case. We'll have to rely on docker/build-push-action to handle
         # santizing this input
+        build-args: ${{ inputs.docker_build_args }}
         context: ${{ inputs.image_build_context }} # zizmor: ignore[template-injection]
         file: ${{ inputs.dockerfile_path }}
         tags: ${{ steps.meta.outputs.tags }}
