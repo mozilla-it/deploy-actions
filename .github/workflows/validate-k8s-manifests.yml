@@ -62,10 +62,10 @@ jobs:
           git checkout  "$HEAD_REF" --
           if [ -f "$MATRIX_CHART/Chart.yaml" ]; then
             helm dependency update "$MATRIX_CHART"
-            values_files="$MATRIX_CHART"/values-*
-            for values_file in $(basename -a $values_files); do
-              env_name=$(basename "$values_file" | sed -E 's/^values-(.+)\.ya?ml$/\1/')
-              helm template $(basename -a "$MATRIX_CHART") "$MATRIX_CHART" -f "$MATRIX_CHART/values.yaml" -f "$MATRIX_CHART/${values_file}" --output-dir "shared/charts/$MATRIX_CHART/${env_name}"
+            values_files=$(find "$MATRIX_CHART" -maxdepth 1 -type f \( -name '*values*.yaml' -o -name '*values*.yml' \) ! \( -name 'values.yaml' -o -name 'values.yml' \))
+            for values_file in $values_files; do
+              filename=$(basename "$values_file")
+              helm template $(basename -a "$MATRIX_CHART") "$MATRIX_CHART" -f "$MATRIX_CHART/values.yaml" -f "$MATRIX_CHART/${values_file}" --output-dir "shared/charts/$MATRIX_CHART/${filename%.*}"
             done
           fi
           echo sanitized_name=$(echo "$MATRIX_CHART" | sed 's/\//-/g') >> $GITHUB_OUTPUT
