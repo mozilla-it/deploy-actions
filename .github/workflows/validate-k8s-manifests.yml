@@ -65,7 +65,7 @@ jobs:
             values_files=$(find "$MATRIX_CHART" -maxdepth 1 -type f \( -name '*values*.yaml' -o -name '*values*.yml' \) ! \( -name 'values.yaml' -o -name 'values.yml' \))
             for values_file in $values_files; do
               filename=$(basename "$values_file")
-              helm template $(basename -a "$MATRIX_CHART") "$MATRIX_CHART" -f "$MATRIX_CHART/values.yaml" -f "$MATRIX_CHART/${values_file}" --output-dir "shared/charts/$MATRIX_CHART/${filename%.*}"
+              helm template $(basename -a "$MATRIX_CHART") "$MATRIX_CHART" -f "$MATRIX_CHART/values.yaml" -f "${values_file}" --output-dir "shared/charts/$MATRIX_CHART/${filename%.*}"
             done
           fi
           echo sanitized_name=$(echo "$MATRIX_CHART" | sed 's/\//-/g') >> $GITHUB_OUTPUT
