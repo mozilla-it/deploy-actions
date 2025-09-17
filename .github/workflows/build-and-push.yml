@@ -14,6 +14,10 @@ on:
       project_id:
         required: true
         type: string
+      docker_build_args:
+        required: false
+        default: ''
+        type: string
       workload_identity_pool_project_number:
         required: false
         default: ${{ vars.GCPV2_WORKLOAD_IDENTITY_POOL_PROJECT_NUMBER }}
@@ -96,11 +100,12 @@ jobs:
           fi
       - name: Build and Tag Container Image
         id: build
-        uses: mozilla-it/deploy-actions/docker-build@6a12c3dac2fba1f9b66cd0ccbaafb5972093ddd9
+        uses: mozilla-it/deploy-actions/docker-build@8dd1c616131df49ae6ba933eecd115ea8d908311
         with:
           image_name: ${{ inputs.image_name }}
           gar_name: ${{ inputs.gar_name }}
           project_id: ${{ inputs.project_id }}
+          docker_build_args: ${{ inputs.docker_build_args }}
           image_build_context: ${{ inputs.image_build_context }}
           dockerfile_path: ${{ inputs.dockerfile_path }}
           image_tag_metadata: ${{ inputs.image_tag_metadata }}
