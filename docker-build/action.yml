@@ -18,7 +18,6 @@ inputs:
     default: ''
     description: Optional list of build-time variables https://docs.docker.com/engine/reference/commandline/buildx_build/#build-arg
     required: false
-    type: string
   image_build_context:
     description: Path to image context for `docker build`
     required: false
