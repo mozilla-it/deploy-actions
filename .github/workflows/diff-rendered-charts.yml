@@ -74,13 +74,13 @@ jobs:
                 helm template "${MATRIX_CHART}" \
                   -f "${MATRIX_CHART}/values.yaml" \
                   -f "${MATRIX_CHART}/values-${env}.yaml" \
-                  -f "${values_file}" \
+                  -f "${MATRIX_CHART}/${values_file}" \
                   --output-dir "$render_path"
               else
                 # Only base + environment file
                 helm template "${MATRIX_CHART}" \
                   -f "${MATRIX_CHART}/values.yaml" \
-                  -f "${values_file}" \
+                  -f "${MATRIX_CHART}/${values_file}" \
                   --output-dir "$render_path"
               fi
            done
