@@ -58,7 +58,7 @@ jobs:
           mkdir -p shared/${MATRIX_REF_NAME}-charts
           if [ -f "${MATRIX_CHART}/Chart.yaml" ]; then
             helm dependency update "${MATRIX_CHART}"
-            values_files="${MATRIX_CHART}"/values-*
+            values_files=$(find "$MATRIX_CHART" -maxdepth 1 -type f \( -name '*values*.yaml' -o -name '*values*.yml' \) ! \( -name 'values.yaml' -o -name 'values.yml' \))
 
             for values_path in ${values_files}; do
               values_file=$(basename "$values_path")
@@ -74,13 +74,13 @@ jobs:
                 helm template "${MATRIX_CHART}" \
                   -f "${MATRIX_CHART}/values.yaml" \
                   -f "${MATRIX_CHART}/values-${env}.yaml" \
-                  -f "${MATRIX_CHART}/${values_file}" \
+                  -f "${values_file}" \
                   --output-dir "$render_path"
               else
                 # Only base + environment file
                 helm template "${MATRIX_CHART}" \
                   -f "${MATRIX_CHART}/values.yaml" \
-                  -f "${MATRIX_CHART}/${values_file}" \
+                  -f "${values_file}" \
                   --output-dir "$render_path"
               fi
            done
