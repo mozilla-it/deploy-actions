@@ -125,7 +125,7 @@ jobs:
           CHARTS: ${{ needs.get_changed_helm_charts.outputs.charts }}
       - name: post diff as comment on pull request
         if: needs.get_changed_helm_charts.outputs.charts != ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
