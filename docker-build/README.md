@@ -1,6 +1,8 @@
 # docker-build
 
-This GitHub Action is designed to build a Docker container image, providing standard MozCloud tags for supported registries. It outputs a list of images in `image_tags` to be consumed by the [docker-push](../docker-push/README.md) action
+This GitHub Action is designed to build a Docker container image, providing standard MozCloud tags for supported registries. It loads the built image into the local Docker context, making it available for immediate use in subsequent workflow steps (e.g., in docker compose files).
+
+The action outputs a list of registry images in image_tags to be consumed by the docker-push action. In addition to the GAR and optionally GHCR image, the action also tags the built image with the plain `image_name` input for local use only. This local tag is not included in the action's outputs and will not be pushed to any registry.
 
 ## Inputs
 
