@@ -1,4 +1,4 @@
-# See `reusable-workflow-docs/build-and-push.md` for usage details
+# See `./docs/build-and-push.md` for usage details
 
 name: Docker Build and Push
 
