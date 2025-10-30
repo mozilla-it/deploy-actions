@@ -16,7 +16,7 @@ on:
         type: string
       docker_build_args:
         required: false
-        default: ''
+        default: ""
         type: string
       workload_identity_pool_project_number:
         required: false
@@ -96,7 +96,7 @@ jobs:
           fi
       - name: Build and Tag Container Image
         id: build
-        uses: mozilla-it/deploy-actions/docker-build@02e319ab01e4082312af19d7c153376bee861509
+        uses: mozilla-it/deploy-actions/docker-build@d3dfba6a37b4adb863c5f3fcf6272bb8a362d61a
         with:
           image_name: ${{ inputs.image_name }}
           gar_name: ${{ inputs.gar_name }}
@@ -126,7 +126,7 @@ jobs:
             bash "$TMP"
           fi
       - name: Push Container Image
-        uses: mozilla-it/deploy-actions/docker-push@6a12c3dac2fba1f9b66cd0ccbaafb5972093ddd9
+        uses: mozilla-it/deploy-actions/docker-push@d3dfba6a37b4adb863c5f3fcf6272bb8a362d61a
         with:
           image_tags: ${{ steps.build.outputs.image_tags }}
           should_authenticate_to_ghcr: ${{ inputs.should_tag_ghcr }}
