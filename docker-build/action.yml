@@ -15,7 +15,7 @@ inputs:
     description: GCP project id
     required: true
   docker_build_args:
-    default: ''
+    default: ""
     description: Optional list of build-time variables https://docs.docker.com/engine/reference/commandline/buildx_build/#build-arg
     required: false
   image_build_context:
@@ -124,7 +124,7 @@ runs:
     - name: Check image
       uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 #v6.18.0
       with:
-        check: true
+        call: check
         # We can't use the intermediate env var trick to appease zizmor in this
         # case. We'll have to rely on docker/build-push-action to handle
         # santizing this input
