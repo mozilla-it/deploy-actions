@@ -16,7 +16,7 @@ on:
         type: string
       docker_build_args:
         required: false
-        default: ''
+        default: ""
         type: string
       workload_identity_pool_project_number:
         required: false
@@ -96,7 +96,7 @@ jobs:
           fi
       - name: Build and Tag Container Image
         id: build
-        uses: mozilla-it/deploy-actions/docker-build@02e319ab01e4082312af19d7c153376bee861509
+        uses: mozilla-it/deploy-actions/docker-build@a03a283ddeae43744c00f3fc86fbb997f65737ed
         with:
           image_name: ${{ inputs.image_name }}
           gar_name: ${{ inputs.gar_name }}
