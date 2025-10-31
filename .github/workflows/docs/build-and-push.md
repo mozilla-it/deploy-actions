@@ -47,6 +47,29 @@ printf '{"commit":"%s","version":"%s","source":"%s","build":"%s"}\n' \
 
 This script generates a `version.json` file with commit, version, and build metadata.
 
+## Best Practices for Prebuild and Postbuild Scripts
+
+### Prebuild Scripts
+
+Prebuild scripts should prepare the build environment and validate inputs before building the container. Common checks include:
+
+- **Linting**: The `docker-build` action used in this workflow uses docker build checks to lint the Dockerfile before building, but you could run additional linting tools here
+- **Build metadata generation**: Create version files with commit SHA, build URL, and timestamps (as shown in the default script)
+- **Dependency validation**: Verify that lock files are up-to-date and dependencies are properly pinned
+
+### Postbuild Scripts
+
+Postbuild scripts validate the built container image before pushing to registries. Recommended checks include:
+
+- **Smoke tests**: Execute basic functional tests against the running container to verify core functionality
+- **Container verification**: Test health check endpoints (`/__heartbeat__`, `/__lbheartbeat__`, `/__version__`) to ensure the service starts correctly
+- **Image size validation**: Verify the image size meets expectations to catch bloat from unnecessary dependencies
+- **Configuration validation**: Confirm required environment variables and config files are present
+
+For detailed examples and implementation guidance, see:
+- [mozilla/cicd-demos/go-demo](https://github.com/mozilla/cicd-demos/tree/main/go-demo) - Reference implementation with prebuild/postbuild scripts
+- [How to: Linting and Testing in Container Builds](https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1920860166/How+to+Linting+and+Testing+in+Container+Builds) - Comprehensive guide to container build validation
+
 ## Permissions
 
 - `contents: read` (required)
