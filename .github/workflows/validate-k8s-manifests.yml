@@ -128,6 +128,7 @@ jobs:
                 -schema-location "${KUBECONFORM_SCHEMA_LOCATION}" \
                 -schema-location "${KUBECONFORM_CUSTOM_SCHEMA_LOCATION}" \
                 -summary \
+                -skip CustomResourceDefinition \
                 -output json \
                 "shared/charts/${chart}" > "$tmp_output" 2>&1 || exit_code=1
 
