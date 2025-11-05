@@ -67,19 +67,9 @@ jobs:
           docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
           cd "shared/charts/$CHART_DIR/"
           for ENV_DIR in */; do
-            # Collect YAML files whose path includes 'templates' and don't include 'tests'
-            FILES=$(find "$ENV_DIR" -type f \( -name "*.yaml" -o -name "*.yml" \) | grep '/templates' | grep -v '/tests')
-            if [ -z "$FILES" ]; then
-              echo "No YAML files under 'template' found in $ENV_DIR, skipping"
-              continue
-            fi
-
-            # Run psa-checker on each matching file
-            for file in $FILES; do
-              echo "Running psa-checker for $file"
-              docker run -i --rm \
-                $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA \
-                --level "$PSS_LEVEL" \
-                -f - < "$file"
+            find $ENV_DIR -type f -exec cat {} + \
+              | docker run -i --rm $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f - \
+              | grep -v "Non standard" \
+              | grep -v "Kind not"
             done
           done
