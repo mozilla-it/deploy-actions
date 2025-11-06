@@ -59,11 +59,12 @@ jobs:
           path: "shared"
       - name: run psa-checker
         id: psa_check
+        shell: bash # sets the flags --noprofile --norc -eo pipefail
         env:
           PSS_LEVEL: ${{ inputs.pss_level }}
           CHART_DIR: ${{ matrix.chart }}
         run: |
-          # Loop over templates from each `values-*` dir and check PSS levels
+          # Loop over templates from each environment dir and check PSS levels
           docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
           cd "shared/charts/$CHART_DIR/"
           for ENV_DIR in */; do
@@ -71,5 +72,4 @@ jobs:
               | docker run -i --rm $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f - \
               | grep -v "Non standard" \
               | grep -v "Kind not"
-            done
           done
