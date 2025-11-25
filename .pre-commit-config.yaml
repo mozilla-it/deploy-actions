@@ -1,0 +1,7 @@
+repos:
+  - repo: https://github.com/reakaleek/gh-action-readme
+    rev: v0.7.0
+    hooks:
+      - id: action-readme
+        # TODO: After the `slack` and `deploy` actions are removed, remove this `files` input
+        files: "^(docker-build|docker-push)/"

@@ -1,5 +1,15 @@
 name: docker-build
-description: Build a Mozcloud service image
+description: |
+  This GitHub Action is designed to build a Docker container image, providing
+  standard MozCloud tags for supported registries. It loads the built image
+  into the local Docker context, making it available for immediate use in
+  subsequent workflow steps (e.g., in docker compose files).
+
+  The action outputs a list of registry images in image_tags to be consumed by
+  the docker-push action. In addition to the GAR and optionally GHCR image,
+  the action also tags the built image with the plain `image_name` input for
+  local use only. This local tag is not included in the action's outputs and
+  will not be pushed to any registry.
 inputs:
   image_name:
     description: Name to give to the built image
@@ -9,38 +19,38 @@ inputs:
     required: false
     default: us
   gar_name:
-    description: GAR Name
+    description: Name of the GAR repository
     required: true
   project_id:
-    description: GCP project id
+    description: GCP project ID
     required: true
   docker_build_args:
     default: ""
-    description: Optional list of build-time variables https://docs.docker.com/engine/reference/commandline/buildx_build/#build-arg
+    description: Build-time variables
     required: false
   image_build_context:
-    description: Path to image context for `docker build`
+    description: Path to the Docker build context
     required: false
     default: ./
   dockerfile_path:
-    description: Path to Dockerfile
+    description: Path to the Dockerfile
     required: false
     default: ./Dockerfile
   image_tag_metadata:
-    description: Optional metadata to append to image tag (e.g. for a tagged commit `v1.2.3` and metadata `dev`, the final image tag will be `v1.2.3--dev`)
+    description: Metadata to append to image tag
     required: false
   should_tag_ghcr:
-    description: Whether to tag images to be pushed to ghcr.io.
+    description: Tag images for GitHub Container Registry
     required: false
     default: "false"
   should_tag_latest:
-    description: Whether to tag images as `latest`.
+    description: Tag images as latest
     required: false
     default: "false"
 
 outputs:
   image_tags:
-    description: "Generated Docker image tags"
+    description: "A newline-delimited list of generated Docker image tags"
     value: ${{ steps.meta.outputs.tags }}
 
 runs:

@@ -1,15 +1,17 @@
 name: docker-push
-description: Push a Docker image to GAR.
+description: |
+  This GitHub Action is designed to push Docker images to Google Artifact
+  Registry (GAR) and optionally GitHub Container Registry (GHCR).
 
 inputs:
   image_tags:
-    description: Newline-delimited list of images to be pushed. See README for more information.
+    description: Newline-delimited list of images to be pushed
     required: true
   workload_identity_pool_project_number:
-    description: Project number of workload identity pool used for OIDC authentication.
+    description: Project number of workload identity pool used for OIDC authentication
     required: true
   project_id:
-    description: GCP project_id used to construct the service account.
+    description: GCP project_id used to construct the service account
     required: true
   gar_location:
     description: GCP region where target GAR is located
@@ -22,7 +24,6 @@ inputs:
   service_account_name:
     description: Service account used to authenticate to GAR
     default: artifact-writer
-
 
 runs:
   using: composite
@@ -56,4 +57,3 @@ runs:
         while IFS= read -r image_tag; do
             docker push $image_tag 
         done <<< "${IMAGE_TAGS}"
-
