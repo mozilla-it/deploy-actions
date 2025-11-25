@@ -1,0 +1,6 @@
+repos:
+  - repo: https://github.com/reakaleek/gh-action-readme
+    rev: v0.7.0
+    hooks:
+      - id: action-readme
+        files: '^(docker-build|docker-push)/'
