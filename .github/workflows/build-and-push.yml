@@ -113,15 +113,14 @@ jobs:
           # Wiz CLI release notes: https://docs.wiz.io/release-notes/wiz-cli
           WIZ_CLI_VERSION: 1.17.0
         run: curl -Lo wizcli "https://downloads.wiz.io/v1/wizcli/$WIZ_CLI_VERSION/wizcli-linux-amd64" && chmod +x wizcli
-      - name: Authenticate to Wiz
-        run: ./wizcli auth --id "$WIZ_CLIENT_ID" --secret "$WIZ_CLIENT_SECRET"
-        env:
-          WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
-          WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
       - name: Run wiz-cli docker image scan
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
-        run: ./wizcli docker scan --image "${IMAGE_NAME}"
+        run: |
+          ./wizcli docker scan \
+            --image "${IMAGE_NAME}" \
+            --client-id "${{ secrets.WIZ_CLIENT_ID }}" \
+            --client-secret "${{ secrets.WIZ_CLIENT_SECRET }}"
       - name: Run post-build commands
         shell: bash
         if: ${{ inputs.postbuild_script != '' }}
