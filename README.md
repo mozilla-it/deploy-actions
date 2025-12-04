@@ -8,6 +8,9 @@ This repository contains GitHub Actions Composite Actions used for Deployment Au
 
 ## Workflows
 * [build-and-push](./.github/workflows/docs/build-and-push.md)
+* [diff-rendered-charts](./.github/workflows/docs/diff-rendered-charts.md)
+* [psa-checker](./.github/workflows/docs/psa-checker.md)
+* [validate-k8s-manifests](./.github/workflows/docs/validate-k8s-manifests.md)
 
 
 ## Releases & Tags
