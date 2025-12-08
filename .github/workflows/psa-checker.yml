@@ -62,17 +62,17 @@ jobs:
         shell: bash # sets the flags --noprofile --norc -eo pipefail
         env:
           PSS_LEVEL: ${{ inputs.pss_level }}
-          CHARTS: ${{ needs.get_changed_helm_charts.outputs.charts }}
+          CHART: ${{ matrix.chart }}
         run: |
           # Loop over templates from each chart and check PSS levels
           docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
           echo "DEBUG: CHART is $CHART"
-          echo "Checking PSS level for ${chart}..."
-          if [ -d "shared/charts/${chart}" ]; then
-            find "shared/charts/${chart}" -type f -exec cat {} + \
+          echo "Checking PSS level for ${CHART}..."
+          if [ -d "shared/charts/${CHART}" ]; then
+            find "shared/charts/${CHART}" -type f -exec cat {} + \
               | docker run -i --rm $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f - \
               | grep -v "Non standard" \
               | grep -v "Kind not"
           else
-            echo "Warning: Rendered output for ${chart} not found."
+            echo "Warning: Rendered output for ${CHART} not found."
           fi
