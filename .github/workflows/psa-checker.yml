@@ -66,7 +66,6 @@ jobs:
         run: |
           # Loop over templates from each chart and check PSS levels
           docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
-          echo "DEBUG: CHART is $CHART"
           echo "Checking PSS level for ${CHART}..."
           if [ -d "shared/charts/${CHART}" ]; then
             find "shared/charts/${CHART}" -type f -exec cat {} + \
@@ -74,5 +73,6 @@ jobs:
               | grep -v "Non standard" \
               | grep -v "Kind not"
           else
+            # Fail only if PSS violations are found - if chart failed to render just print a warning
             echo "Warning: Rendered output for ${CHART} not found."
           fi
