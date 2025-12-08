@@ -64,7 +64,7 @@ jobs:
           PSS_LEVEL: ${{ inputs.pss_level }}
           CHART: ${{ matrix.chart }}
         run: |
-          # Loop over templates from each chart and check PSS levels
+          # Check pod security levels for templates in each chart
           docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
           echo "Checking PSS level for ${CHART}..."
           if [ -d "shared/charts/${CHART}" ]; then
