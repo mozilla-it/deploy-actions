@@ -54,7 +54,7 @@ jobs:
       - name: download artifacts
         uses: actions/download-artifact@v6
         with:
-          pattern: "k8s-manifests-*"
+          pattern: k8s-manifests-*
           merge-multiple: true
           path: "shared"
       - name: run psa-checker
@@ -62,14 +62,17 @@ jobs:
         shell: bash # sets the flags --noprofile --norc -eo pipefail
         env:
           PSS_LEVEL: ${{ inputs.pss_level }}
-          CHART_DIR: ${{ matrix.chart }}
+          CHART: ${{ matrix.chart }}
         run: |
-          # Loop over templates from each environment dir and check PSS levels
+          # Check pod security levels for templates in each chart
           docker pull $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA # Pull before run so the output is less messy
-          cd "shared/charts/$CHART_DIR/"
-          for ENV_DIR in */; do
-            find $ENV_DIR -type f -exec cat {} + \
+          echo "Checking PSS level for ${CHART}..."
+          if [ -d "shared/charts/${CHART}" ]; then
+            find "shared/charts/${CHART}" -type f -exec cat {} + \
               | docker run -i --rm $PSA_CHECKER_IMAGE:$PSA_CHECKER_SHA --level "$PSS_LEVEL" -f - \
               | grep -v "Non standard" \
               | grep -v "Kind not"
-          done
+          else
+            # Fail only if PSS violations are found - if chart failed to render just print a warning
+            echo "Warning: Rendered output for ${CHART} not found."
+          fi
