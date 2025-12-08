@@ -38,8 +38,8 @@ jobs:
         id: find_changed_charts
         run: |
           git fetch origin $GITHUB_BASE_REF:$GITHUB_BASE_REF
-          echo matrix_changed_charts=$(git diff --name-only $GITHUB_BASE_REF...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq | jq -R 'split("\n")' | jq -s 'flatten(1)') >> $GITHUB_OUTPUT
-          echo changed_charts=$(git diff --name-only $GITHUB_BASE_REF...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq) >> $GITHUB_OUTPUT
+          echo matrix_changed_charts=$(git diff --name-only $GITHUB_BASE_REF...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq | grep -vE "^platform-shared/k8s/*" |jq -R 'split("\n")' | jq -s 'flatten(1)') >> $GITHUB_OUTPUT
+          echo changed_charts=$(git diff --name-only $GITHUB_BASE_REF...HEAD -- '**/k8s/**/*.yaml' '**/k8s/**/*.yml' '**/k8s/**/*.tpl' '**/k8s/**/*.tmpl' | cut -d'/' -f1,2,3 | uniq | grep -vE "^platform-shared/k8s/*") >> $GITHUB_OUTPUT
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
 
