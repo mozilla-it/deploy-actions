@@ -108,6 +108,22 @@ jobs:
           should_tag_ghcr: ${{ inputs.should_tag_ghcr }}
           should_tag_latest: ${{ inputs.should_tag_latest }}
           gar_location: ${{ inputs.gar_location }}
+      - name: Download Wiz CLI
+        env:
+          # Wiz CLI release notes: https://docs.wiz.io/release-notes/wiz-cli
+          WIZ_CLI_VERSION: 1.17.0
+        run: curl -Lo wizcli "https://downloads.wiz.io/v1/wizcli/$WIZ_CLI_VERSION/wizcli-linux-amd64" && chmod +x wizcli
+      - name: Run wiz-cli docker image scan
+        env:
+          IMAGE_TAGS: ${{ steps.build.outputs.image_tags }}
+        run: |
+          while IFS= read -r image_tag; do
+            echo "Scanning image: ${image_tag}"
+            ./wizcli docker scan \
+              --image "${image_tag}" \
+              --client-id "${{ secrets.WIZ_CLIENT_ID }}" \
+              --client-secret "${{ secrets.WIZ_CLIENT_SECRET }}"
+          done <<< "${IMAGE_TAGS}"
       - name: Run post-build commands
         shell: bash
         if: ${{ inputs.postbuild_script != '' }}
