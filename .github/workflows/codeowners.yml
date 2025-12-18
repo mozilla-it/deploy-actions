@@ -24,11 +24,15 @@ jobs:
     steps:
       - name: Clone Repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Lint CODEOWNERS
         run: |
           exclude_args=""
-          for dir in ${{ inputs.exclude_dirs }}; do
+          for dir in ${INPUTS_EXCLUDE_DIRS}; do
             exclude_args="$exclude_args --excludedirs $dir"
           done
           /usr/bin/lint-codeowners $PWD $exclude_args
+        env:
+          INPUTS_EXCLUDE_DIRS: ${{ inputs.exclude_dirs }}
