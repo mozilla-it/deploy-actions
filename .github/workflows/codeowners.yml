@@ -1,0 +1,34 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# Reusable workflow to lint CODEOWNERS file
+
+name: CODEOWNERS
+
+on:
+  workflow_call:
+    inputs:
+      exclude_dirs:
+        description: 'Directories to exclude from linting (space-separated, e.g. "projects misc modules")'
+        type: string
+        required: false
+        default: ""
+
+jobs:
+  lint-codeowners:
+    runs-on: ubuntu-latest
+    container:
+      image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/sre-citools:latest
+      options: --cpus 1
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v6
+
+      - name: Lint CODEOWNERS
+        run: |
+          exclude_args=""
+          for dir in ${{ inputs.exclude_dirs }}; do
+            exclude_args="$exclude_args --excludedirs $dir"
+          done
+          /usr/bin/lint-codeowners $PWD $exclude_args
