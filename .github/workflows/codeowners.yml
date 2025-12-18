@@ -19,7 +19,7 @@ jobs:
   lint-codeowners:
     runs-on: ubuntu-latest
     container:
-      image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/sre-citools:latest
+      image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/sre-citools:1.0
       options: --cpus 1
     steps:
       - name: Clone Repository
