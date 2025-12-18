@@ -2,9 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# Reusable workflow to lint CODEOWNERS file
+# Reusable workflow to lint CODEOWNERS files in our *-infra repos
 
-name: CODEOWNERS
+name: Lint CODEOWNERS
 
 on:
   workflow_call:
