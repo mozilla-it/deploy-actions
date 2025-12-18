@@ -33,6 +33,6 @@ jobs:
           for dir in ${INPUTS_EXCLUDE_DIRS}; do
             exclude_args="$exclude_args --excludedirs $dir"
           done
-          /usr/bin/lint-codeowners $PWD $exclude_args
+          /usr/bin/lint-codeowners $GITHUB_WORKSPACE $exclude_args
         env:
           INPUTS_EXCLUDE_DIRS: ${{ inputs.exclude_dirs }}
