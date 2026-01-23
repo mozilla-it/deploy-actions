@@ -47,6 +47,10 @@ inputs:
     description: Tag images as latest
     required: false
     default: "false"
+  enable_attestations:
+    description: Enable SBOM and provenance attestations for supply chain security
+    required: false
+    default: "false"
 
 outputs:
   image_tags:
@@ -56,7 +60,17 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 #v3.10.0
+    - name: Set up Docker
+      if: ${{ inputs.enable_attestations == 'true' }}
+      uses: docker/setup-docker-action@v4
+      with:
+        daemon-config: |
+          {
+            "features": {
+              "containerd-snapshotter": true
+            }
+          }
+    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f #v3.12.0
     - name: Generate MozCloud Tag
       id: mozcloud-tag
       shell: bash
@@ -158,7 +172,9 @@ runs:
           ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
-        load: true
         push: false
+        load: true
+        sbom: ${{ inputs.enable_attestations == 'true' }}
+        provenance: ${{ inputs.enable_attestations == 'true' && 'mode=max' || 'false' }}
         cache-from: type=gha
         cache-to: type=gha,mode=max

@@ -32,6 +32,18 @@ these inputs.
 | `should_tag_latest`                     | false    | boolean | Whether to tag the image as `latest`. (default: `false`)                                                        |
 | `gar_location`                          | false    | string  | Artifact Registry location. (default: `"us"`)                                                                   |
 | `service_account_name`                  | false    | string  | GCP service account for pushing to registry. (default: `"artifact-writer"`)                                     |
+| `enable_attestations`                   | false    | boolean | Enable SBOM and provenance attestations for supply chain security. (default: `false`)                           |
+
+### `enable_attestations`
+
+When enabled, generates SBOM (Software Bill of Materials) and provenance attestations for improved supply chain security:
+
+- **SBOM**: Enables vulnerability scanning and dependency tracking
+- **Provenance**: Proves images were built from trusted sources
+
+Attestations are automatically attached to images and preserved when pushed to GAR/GHCR. When enabled, the workflow configures Docker's containerd image store to support generating attestations while maintaining the build → test → push workflow pattern.
+
+**Note**: Enabling attestations switches Docker to use the containerd image store, which [requires additional disk space](https://docs.docker.com/engine/storage/containerd/#disk-space-usage) compared to the default image store. Consider this when running on disk-constrained runners.
 
 ### Default `prebuild_script`
 
