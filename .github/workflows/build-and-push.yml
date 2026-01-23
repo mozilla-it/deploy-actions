@@ -64,6 +64,11 @@ on:
         required: false
         type: string
         default: "artifact-writer"
+      enable_attestations:
+        required: false
+        type: boolean
+        default: false
+        description: Enable SBOM and provenance attestations for supply chain security
 
 jobs:
   build-and-push:
@@ -108,6 +113,7 @@ jobs:
           should_tag_ghcr: ${{ inputs.should_tag_ghcr }}
           should_tag_latest: ${{ inputs.should_tag_latest }}
           gar_location: ${{ inputs.gar_location }}
+          enable_attestations: ${{ inputs.enable_attestations }}
       - name: Run post-build commands
         shell: bash
         if: ${{ inputs.postbuild_script != '' }}

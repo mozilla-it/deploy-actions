@@ -17,18 +17,19 @@ will not be pushed to any registry.
 ## Inputs
 
 <!--inputs-->
-| Name                  | Description                              | Required | Default        |
-|-----------------------|------------------------------------------|----------|----------------|
-| `image_name`          | Name to give to the built image          | `true`   | ` `            |
-| `gar_location`        | GCP region where GAR is located          | `false`  | `us`           |
-| `gar_name`            | Name of the GAR repository               | `true`   | ` `            |
-| `project_id`          | GCP project ID                           | `true`   | ` `            |
-| `docker_build_args`   | Build-time variables                     | `false`  | ` `            |
-| `image_build_context` | Path to the Docker build context         | `false`  | `./`           |
-| `dockerfile_path`     | Path to the Dockerfile                   | `false`  | `./Dockerfile` |
-| `image_tag_metadata`  | Metadata to append to image tag          | `false`  | ` `            |
-| `should_tag_ghcr`     | Tag images for GitHub Container Registry | `false`  | `false`        |
-| `should_tag_latest`   | Tag images as latest                     | `false`  | `false`        |
+| Name                  | Description                                                       | Required | Default        |
+|-----------------------|-------------------------------------------------------------------|----------|----------------|
+| `image_name`          | Name to give to the built image                                   | `true`   | ` `            |
+| `gar_location`        | GCP region where GAR is located                                   | `false`  | `us`           |
+| `gar_name`            | Name of the GAR repository                                        | `true`   | ` `            |
+| `project_id`          | GCP project ID                                                    | `true`   | ` `            |
+| `docker_build_args`   | Build-time variables                                              | `false`  | ` `            |
+| `image_build_context` | Path to the Docker build context                                  | `false`  | `./`           |
+| `dockerfile_path`     | Path to the Dockerfile                                            | `false`  | `./Dockerfile` |
+| `image_tag_metadata`  | Metadata to append to image tag                                   | `false`  | ` `            |
+| `should_tag_ghcr`     | Tag images for GitHub Container Registry                          | `false`  | `false`        |
+| `should_tag_latest`   | Tag images as latest                                              | `false`  | `false`        |
+| `enable_attestations` | Enable SBOM and provenance attestations for supply chain security | `false`  | `false`        |
 <!--/inputs-->
 
 ### Input Details
@@ -50,6 +51,17 @@ Both of these paths are relative to the repository root. The default values (`./
 #### `image_tag_metadata`
 
 Optional metadata to append to the image tag. For example, for a workflow triggered by a git tag `v1.2.3` and an `image_tag_metadata` value of `dev`, the final image tag will be `v1.2.3--dev`.
+
+#### `enable_attestations`
+
+When enabled, generates SBOM (Software Bill of Materials) and provenance attestations for improved supply chain security:
+
+- **SBOM**: Enables vulnerability scanning and dependency tracking
+- **Provenance**: Proves images were built from trusted sources
+
+Attestations are automatically attached to images and preserved when pushed to GAR/GHCR. When enabled, the action configures Docker's containerd image store to support generating attestations while maintaining local image loading for testing.
+
+**Note**: Enabling attestations switches Docker to use the containerd image store, which [requires additional disk space](https://docs.docker.com/engine/storage/containerd/#disk-space-usage) compared to the default image store. Consider this when running on disk-constrained runners.
 
 
 ## Outputs
