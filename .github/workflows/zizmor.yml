@@ -15,7 +15,7 @@ permissions: {}
 
 jobs:
   zizmor:
-    name: Zizmor
+    name: zizmor
     runs-on: ubuntu-latest
     steps:
       - name: Clone Repository
