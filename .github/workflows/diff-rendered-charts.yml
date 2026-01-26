@@ -17,7 +17,7 @@ jobs:
       charts: ${{ steps.find_changed_charts.outputs.changed_charts }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
          fetch-depth: '100'
          persist-credentials: true # We are using these credentials in later steps
@@ -44,7 +44,7 @@ jobs:
             sha: ${{ github.head_ref }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: true # We are using these credentials in later steps
           ref: ${{ matrix.ref.sha }}
@@ -91,7 +91,7 @@ jobs:
           MATRIX_REF_NAME: ${{ matrix.ref.name }}
 
       - name: upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: "shared-${{ matrix.ref.name }}-${{ steps.render.outputs.sanitized_name }}"
           path: "shared"
@@ -106,7 +106,7 @@ jobs:
         uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
 
       - name: download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           pattern: shared-*
           merge-multiple: true
@@ -125,7 +125,7 @@ jobs:
           CHARTS: ${{ needs.get_changed_helm_charts.outputs.charts }}
       - name: post diff as comment on pull request
         if: needs.get_changed_helm_charts.outputs.charts != ''
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require('fs');
