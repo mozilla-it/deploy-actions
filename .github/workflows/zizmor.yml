@@ -15,7 +15,7 @@ permissions: {}
 
 jobs:
   zizmor:
-    name: Zizmor latest via Cargo
+    name: zizmor
     runs-on: ubuntu-latest
     steps:
       - name: Clone Repository
@@ -23,7 +23,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - run: python -m pip install zizmor
-        shell: bash
       - name: Run zizmor
-        run: zizmor .
+        uses: zizmorcore/zizmor-action@135698455da5c3b3e55f73f4419e481ab68cdd95 # v0.4.1
+        with:
+          advanced-security: false
