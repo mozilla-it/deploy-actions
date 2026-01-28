@@ -68,11 +68,38 @@ jobs:
           git checkout  "$HEAD_REF" --
           if [ -f "$MATRIX_CHART/Chart.yaml" ]; then
             helm dependency update "$MATRIX_CHART"
-            values_files=$(find "$MATRIX_CHART" -maxdepth 1 -type f \( -name '*values*.yaml' -o -name '*values*.yml' \) ! \( -name 'values.yaml' -o -name 'values.yml' \))
-            for values_file in $values_files; do
-              filename=$(basename "$values_file")
-              helm template $(basename -a "$MATRIX_CHART") "$MATRIX_CHART" -f "$MATRIX_CHART/values.yaml" -f "${values_file}" --output-dir "shared/charts/$MATRIX_CHART/${filename%.*}"
-            done
+
+            while read values_file; do
+              filename=$(basename "${values_file}")
+              filename_without_suffix=${filename%.*}
+
+              env=${filename_without_suffix%*.values}
+              env=${env#values-*}
+
+              helm template $(basename -a "$MATRIX_CHART" ) "$MATRIX_CHART" \
+                -f $values_file \
+                --output-dir shared/charts/$MATRIX_CHART/$filename_without_suffix
+
+              while read region_values_file; do
+                region_filename=$(basename $region_values_file)
+                region_filename_without_suffix=${region_filename%.*}
+
+                helm template $(basename -a "$MATRIX_CHART") "$MATRIX_CHART" \
+                  -f $values_file \
+                  -f $region_values_file \
+                  --output-dir shared/charts/$MATRIX_CHART/$region_filename_without_suffix
+
+              done < <(find "$BASE_DIR/$MATRIX_CHART" \
+                -maxdepth 1 \
+                -type f \
+                -regextype egrep \
+                -regex ".*/values-${env}(-[[:alnum:]]+){2}\.(yaml|yml)$")
+            done < <(find "$BASE_DIR/$MATRIX_CHART" \
+              -maxdepth 1 \
+              -type f \
+              -regextype egrep \
+              -regex ".*/([[:alnum:]]+\.)?values((-ent)?-([[:alnum:]]+))?\.(yaml|yml)$" \
+              -not -regex ".*/values.(yaml|yml)$")
           fi
           echo sanitized_name=$(echo "$MATRIX_CHART" | sed 's/\//-/g') >> $GITHUB_OUTPUT
         env:
