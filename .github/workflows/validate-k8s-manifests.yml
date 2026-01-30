@@ -31,7 +31,7 @@ jobs:
       charts: ${{ steps.find_changed_charts.outputs.changed_charts }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
          fetch-depth: '100'
          persist-credentials: true # We are using these credentials in later steps
@@ -53,7 +53,7 @@ jobs:
         chart: ${{ fromJSON(needs.get_changed_helm_charts.outputs.matrix_charts) }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
          persist-credentials: true # We are using these credentials in later steps
 
@@ -106,7 +106,7 @@ jobs:
           MATRIX_CHART: ${{ matrix.chart }}
 
       - name: upload artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f #v6.0.0
         with:
           name: "k8s-manifests-${{ steps.render_head.outputs.sanitized_name }}"
           path: "shared"
@@ -135,7 +135,7 @@ jobs:
           sudo mv kubeconform /usr/local/bin/kubeconform
 
       - name: download artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 #v7.0.0
         with:
           pattern: k8s-manifests-*
           merge-multiple: true

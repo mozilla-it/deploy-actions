@@ -62,7 +62,7 @@ runs:
   steps:
     - name: Set up Docker
       if: ${{ inputs.enable_attestations == 'true' }}
-      uses: docker/setup-docker-action@e43656e248c0bd0647d3f5c195d116aacf6fcaf4 # v4
+      uses: docker/setup-docker-action@e43656e248c0bd0647d3f5c195d116aacf6fcaf4 #v4.7.0
       with:
         daemon-config: |
           {
@@ -140,7 +140,7 @@ runs:
 
     - name: Docker meta
       id: meta
-      uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 #v5.7.0
+      uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 #v5.10.0
       with:
         images: ${{ steps.set-images.outputs.images }}
         tags: ${{ steps.set-tags.outputs.tags }}
