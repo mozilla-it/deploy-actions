@@ -3,16 +3,15 @@
 This reusable GitHub Actions workflow encapsulates an end-to-end process for building and pushing a
 container image for a MozCloud service.
 
-The inputs of this workflow are mostly used to configure [`docker-build`](../docker-build/README.md) 
-and [`docker-push`](../docker-push/README.md). See their documentation for more details on some of 
-these inputs.
+The inputs of this workflow are mostly used to configure [`docker-build`] and [`docker-push`].
+See their documentation for more details on some of these inputs.
 
 ## Overview
 
 - Runs a `prebuild_script` to prepare the build environment (e.g. generate `version.json`)
-- Builds and tags the Docker image using [`docker-build`](../docker-build/README.md)
+- Builds and tags the Docker image using [`docker-build`]
 - Provides an optional hook to run a `postbuild_script` after building (e.g. for running tests)
-- Pushes the image to GCP Artifact Registry (and optionally GitHub Container Registry) using [docker-push](../docker-push/README.md)
+- Pushes the image to GCP Artifact Registry (and optionally GitHub Container Registry) using [`docker-push`]
 
 
 ## Inputs
@@ -143,4 +142,6 @@ jobs:
 Is your build failing? The "[How to: Publish Container Images to GAR][how-to]"
 wiki page may include some answers, specifically around permissions issues.
 
+[`docker-build`]: ../../../docker-build/README.md
+[`docker-push`]: ../../../docker-push/README.md
 [how-to]: https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/997163545/How+to+Publish+Container+Images+to+GAR
