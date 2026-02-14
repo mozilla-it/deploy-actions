@@ -50,7 +50,7 @@ jobs:
           ref: ${{ matrix.ref.sha }}
 
       - name: setup helm
-        uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 #v4.3.1
 
       - name: render ${{ matrix.chart }} from ${{ matrix.ref.name }} ref
         id: render
@@ -103,7 +103,7 @@ jobs:
       - render_charts
     steps:
       - name: setup helm
-        uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 #v4.3.1
 
       - name: download artifacts
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 #v7.0.0
