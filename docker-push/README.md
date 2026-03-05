@@ -33,6 +33,15 @@ This value should be available as the repository variable `vars.GCPV2_WORKLOAD_I
 [1]: https://cloud.google.com/artifact-registry/docs/docker/pushing-and-pulling#tag
 [2]: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#pushing-container-images
 
+### GHCR Image Visibility
+
+GHCR images are private by default. Depending on which GitHub organization your repository
+belongs to, you may need to [file a bug][ghcr-visibility-bug] to allow making published GHCR
+images publicly accessible (see [example][ghcr-visibility-example]).
+
+[ghcr-visibility-bug]: https://bugzilla.mozilla.org/enter_bug.cgi?product=mozilla.org&component=Github%3A+Administration
+[ghcr-visibility-example]: https://bugzilla.mozilla.org/show_bug.cgi?id=2009036
+
 ## Example Usage
 
 ```yaml

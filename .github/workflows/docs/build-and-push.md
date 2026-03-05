@@ -137,6 +137,10 @@ jobs:
       should_tag_ghcr: true
 ```
 
+**Note**: GHCR images are private by default. Depending on which GitHub organization your
+repository belongs to, you may need to [file a bug][ghcr-visibility-bug] to allow making
+published GHCR images publicly accessible (see [example][ghcr-visibility-example]).
+
 ## Troubleshooting
 
 Is your build failing? The "[How to: Publish Container Images to GAR][how-to]"
@@ -145,3 +149,5 @@ wiki page may include some answers, specifically around permissions issues.
 [`docker-build`]: ../../../docker-build/README.md
 [`docker-push`]: ../../../docker-push/README.md
 [how-to]: https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/997163545/How+to+Publish+Container+Images+to+GAR
+[ghcr-visibility-bug]: https://bugzilla.mozilla.org/enter_bug.cgi?product=mozilla.org&component=Github%3A+Administration
+[ghcr-visibility-example]: https://bugzilla.mozilla.org/show_bug.cgi?id=2009036
