@@ -123,8 +123,8 @@ jobs:
           done
         env:
           CHARTS: ${{ needs.get_changed_helm_charts.outputs.charts }}
-      - name: post diff as job summary
-        id: post_diff
+      - name: classify diff
+        id: classify_diff
         if: needs.get_changed_helm_charts.outputs.charts != ''
         run: |
           if [ ! -f diff.log ]; then
@@ -132,42 +132,81 @@ jobs:
             exit 0
           fi
           max_size=$((1024 * 1024))
+          comment_limit=65000
           file_size=$(stat --format=%s diff.log)
           if [ "$file_size" -gt "$max_size" ]; then
             echo "diff_too_large=true" >> "$GITHUB_OUTPUT"
-            echo "Changes found in Helm charts." >> "$GITHUB_STEP_SUMMARY"
-            echo '' >> "$GITHUB_STEP_SUMMARY"
-            echo "Diff output exceeds 1MiB and is too large to display inline. Download the \`helm-diff\` artifact to view the full diff." >> "$GITHUB_STEP_SUMMARY"
+            echo "diff_fits_in_comment=false" >> "$GITHUB_OUTPUT"
           else
             echo "diff_too_large=false" >> "$GITHUB_OUTPUT"
-            echo "Changes found in Helm charts." >> "$GITHUB_STEP_SUMMARY"
-            echo '<details><summary>Show Output</summary>' >> "$GITHUB_STEP_SUMMARY"
-            echo '' >> "$GITHUB_STEP_SUMMARY"
-            echo '```diff' >> "$GITHUB_STEP_SUMMARY"
-            cat diff.log >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            echo '</details>' >> "$GITHUB_STEP_SUMMARY"
+            if [ "$file_size" -le "$comment_limit" ]; then
+              echo "diff_fits_in_comment=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "diff_fits_in_comment=false" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
+      - name: post diff as comment
+        if: steps.classify_diff.outputs.diff_fits_in_comment == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          {
+            echo "Helm chart changes detected."
+            echo ""
+            echo "<details><summary>Show Diff</summary>"
+            echo ""
+            echo '```diff'
+            cat diff.log
+            echo '```'
+            echo ""
+            echo "</details>"
+          } > comment_body.txt
+          gh pr comment "$PR_NUMBER" --body-file comment_body.txt
+          echo "Changes found in Helm charts." >> "$GITHUB_STEP_SUMMARY"
+          echo '<details><summary>Show Output</summary>' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '```diff' >> "$GITHUB_STEP_SUMMARY"
+          cat diff.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '</details>' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: post diff as job summary
+        if: steps.classify_diff.outputs.diff_fits_in_comment == 'false' && steps.classify_diff.outputs.diff_too_large == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          echo "Changes found in Helm charts." >> "$GITHUB_STEP_SUMMARY"
+          echo '<details><summary>Show Output</summary>' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '```diff' >> "$GITHUB_STEP_SUMMARY"
+          cat diff.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '</details>' >> "$GITHUB_STEP_SUMMARY"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gh pr comment "$PR_NUMBER" --body "Helm chart changes detected. View the diff in the [job summary](${run_url})."
+
       - name: upload diff artifact
-        if: steps.post_diff.outputs.diff_too_large == 'true'
+        id: upload_artifact
+        if: steps.classify_diff.outputs.diff_too_large == 'true'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f #v6.0.0
         with:
           name: helm-diff
           path: diff.log
 
-      - name: comment on pull request
-        if: steps.post_diff.outputs.diff_too_large != ''
+      - name: post artifact link
+        if: steps.classify_diff.outputs.diff_too_large == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          DIFF_TOO_LARGE: ${{ steps.post_diff.outputs.diff_too_large }}
           PR_NUMBER: ${{ github.event.number }}
+          ARTIFACT_URL: ${{ steps.upload_artifact.outputs.artifact-url }}
         run: |
-          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          if [ "$DIFF_TOO_LARGE" = "true" ]; then
-            body="Helm chart changes detected. The diff is too large for the job summary. Download the \`helm-diff\` artifact from the [workflow run](${run_url})."
-          else
-            body="Helm chart changes detected. View the diff in the [job summary](${run_url})."
-          fi
-          gh pr comment "$PR_NUMBER" --body "$body"
+          echo "Changes found in Helm charts." >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo "Diff output exceeds 1MiB and is too large to display inline. [Download the helm-diff artifact](${ARTIFACT_URL}) to view the full diff." >> "$GITHUB_STEP_SUMMARY"
+          gh pr comment "$PR_NUMBER" --body "Helm chart changes detected. The diff is too large to display inline. [Download the helm-diff artifact](${ARTIFACT_URL}) to view the full diff."
